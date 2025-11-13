@@ -24,47 +24,21 @@ function load(key, d = null) {
 const DEFAULT_API = "https://nema-kunku-diaspora.onrender.com/api";
 
 export function setApiBase(url) {
-  const use = url && url.trim() ? url.trim() : DEFAULT_API;
-  save(LS.api, use);
-  console.log("[NKD] API base (set):", use);
+  save(LS.api, url || DEFAULT_API);
 }
 export function getApiBase() {
-  const v = load(LS.api, DEFAULT_API);
-  return v || DEFAULT_API;
+  return load(LS.api, DEFAULT_API);
 }
 
-// Log for sanity on every page load
+// Log for sanity
 (() => console.log("[NKD] API base (saved):", getApiBase()))();
 
 /* ---------------- Tiny fetch client ---------------- */
-
-/**
- * Internal helper: rewrite paths like "/members/NKD001"
- * to "/members?memberId=NKD001" so the backend query
- * route is used instead of the :id (ObjectId) route.
- */
-function normalizePath(path) {
-  if (path.startsWith("http")) return path; // absolute URL, leave as-is
-
-  let clean = path.replace(/^\//, ""); // remove leading /
-
-  if (clean.startsWith("members/")) {
-    const tail = clean.slice("members/".length);
-    // NKD-style memberId: NKD001, NKD023, etc.
-    if (/^NKD\d+$/i.test(tail)) {
-      clean = `members?memberId=${encodeURIComponent(tail)}`;
-    }
-  }
-
-  return "/" + clean;
-}
-
 async function request(path, opts = {}) {
   const base = getApiBase();
-
-  const isAbs = path.startsWith("http");
-  const finalPath = isAbs ? path : normalizePath(path);
-  const url = isAbs ? finalPath : base.replace(/\/$/, "") + finalPath;
+  const url = path.startsWith("http")
+    ? path
+    : base.replace(/\/$/, "") + "/" + path.replace(/^\//, "");
 
   console.log("[NKD] → request", opts.method || "GET", url);
 
@@ -75,13 +49,13 @@ async function request(path, opts = {}) {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    console.error("[NKD] ← error", res.status, res.statusText, text);
-    throw new Error(`${res.status} ${res.statusText}: ${text}`);
+    const msg = `${res.status} ${res.statusText}: ${text}`;
+    console.error("[NKD] ← error", msg);
+    throw new Error(msg);
   }
 
   const ct = res.headers.get("content-type") || "";
-  const out = ct.includes("application/json") ? await res.json() : await res.text();
-  return out;
+  return ct.includes("application/json") ? res.json() : res.text();
 }
 
 export const api = {
@@ -93,19 +67,14 @@ export const api = {
   del: (p) => request(p, { method: "DELETE" }),
 
   async getMembers() {
-    const r = await request("/members").catch((err) => {
-      console.error("[NKD] getMembers failed, returning []", err);
-      return { items: [] };
-    });
+    const r = await request("/members").catch(() => ({ items: [] }));
     console.log("[NKD] getMembers OK, raw:", r);
     return Array.isArray(r) ? r : r.items || [];
   },
-
   async getContributions() {
     const r = await request("/contributions").catch(() => ({ items: [] }));
     return Array.isArray(r) ? r : r.items || [];
   },
-
   async getMeetings() {
     const r = await request("/meetings").catch(() => ({ items: [] }));
     return Array.isArray(r) ? r : r.items || [];
@@ -228,68 +197,30 @@ export const text = (s, v) => {
 /* ---------------- Member resolving ---------------- */
 export const norm = (v = "") => String(v || "").trim();
 
-/**
- * Make sure member objects have a consistent shape.
- */
-export function normalizeMember(m = {}) {
-  if (!m || typeof m !== "object") return {};
-
-  return {
-    ...m,
-    _id: m._id || m.id || null,
-    memberId: m.memberId || "",
-    name: m.name || "",
-    email: (m.email || "").toLowerCase(),
-    phone: m.phone || m.contact || "",
-    country: m.country || "",
-    role: m.role || "member",
-    contributionPlan: m.contributionPlan || "",
-    status: m.status || "Active",
-    memberSince: m.memberSince || m.joined || null,
-  };
-}
-
 export async function resolveMemberByIdentifier(identifier = "") {
   const id = norm(identifier);
   if (!id) return null;
 
-  const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
-
-  // 1) If looks like ObjectId -> /members/:id
-  if (isObjectId) {
-    try {
-      const one = await api.get(`/members/${id}`);
-      if (one && (one._id || one.memberId || one.email)) {
-        return normalizeMember(one);
-      }
-    } catch (err) {
-      console.warn("[NKD] resolveMemberByIdentifier ObjectId fetch failed", err);
-    }
+  // 1) Try direct /members/:id (Mongo _id)
+  try {
+    const one = await api.get(`/members/${encodeURIComponent(id)}`);
+    if (one && (one._id || one.memberId || one.email)) return one;
+  } catch {
+    // ignore – fall back to list scan
   }
 
-  // 2) NKD code or email → /members?memberId=... first
-  if (/^NKD\d+$/i.test(id)) {
-    try {
-      const res = await api.get(`/members?memberId=${encodeURIComponent(id)}`);
-      const list = Array.isArray(res) ? res : res.items || [];
-      if (list[0]) return normalizeMember(list[0]);
-    } catch (err) {
-      console.warn("[NKD] resolveMemberByIdentifier ?memberId fetch failed", err);
-    }
-  }
-
-  // 3) Fallback: list + match by memberId or email
+  // 2) Fallback: scan member list by memberId/email
   const list = await api.getMembers().catch(() => []);
   const needle = id.toLowerCase();
 
-  const found =
+  return (
     list.find(
       (m) =>
-        (m?.memberId && String(m.memberId).toLowerCase() === needle) ||
+        (m?.memberId &&
+          String(m.memberId).toLowerCase() === needle) ||
         (m?.email && String(m.email).toLowerCase() === needle)
-    ) || null;
-
-  return found ? normalizeMember(found) : null;
+    ) || null
+  );
 }
 
 /* ---------------- Offline role guess ---------------- */
@@ -308,4 +239,48 @@ export function offlineRoleFromEmail(email = "") {
   if (e.includes("viewer")) return "viewer";
 
   return "member";
+}
+
+/* ---------------- Toast helper ---------------- */
+/**
+ * Simple toast: shows a small message at the bottom of the screen.
+ * Usage: toast("Member saved", "ok") or toast("Error", "error")
+ */
+export function toast(message, type = "info") {
+  if (!message) return;
+
+  // Re-use existing toast if present
+  let box = document.getElementById("nkd-toast");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "nkd-toast";
+    box.style.position = "fixed";
+    box.style.left = "50%";
+    box.style.bottom = "24px";
+    box.style.transform = "translateX(-50%)";
+    box.style.padding = "10px 18px";
+    box.style.borderRadius = "999px";
+    box.style.fontSize = "14px";
+    box.style.fontWeight = "600";
+    box.style.background = "#2e7d32";
+    box.style.color = "#fff";
+    box.style.boxShadow = "0 8px 20px rgba(0,0,0,.18)";
+    box.style.zIndex = "9999";
+    box.style.opacity = "0";
+    box.style.transition = "opacity .2s ease-out";
+    document.body.appendChild(box);
+  }
+
+  box.textContent = message;
+
+  if (type === "error") box.style.background = "#b00020";
+  else if (type === "warn") box.style.background = "#f9a825";
+  else box.style.background = "#2e7d32";
+
+  box.style.opacity = "1";
+
+  clearTimeout(box._hideTimer);
+  box._hideTimer = setTimeout(() => {
+    box.style.opacity = "0";
+  }, 2500);
 }
