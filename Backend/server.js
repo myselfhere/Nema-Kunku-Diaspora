@@ -6,6 +6,8 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Routes
 import memberRoutes from "./routes/memberRoutes.js";
@@ -18,6 +20,10 @@ import authRoutes from "./routes/authRoutes.js";
 dotenv.config();
 
 const app = express();
+
+// ---------- ES module __dirname helper ----------
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ---------- Env ----------
 const DEFAULT_PORT = Number(process.env.PORT || 5000);
@@ -33,6 +39,7 @@ app.set("trust proxy", 1);
 const allowedOrigins = new Set([
   "http://127.0.0.1:5500",
   "http://localhost:5500",
+  "https://nema-kunku-diaspora.onrender.com",
   // add your live domain(s) when ready:
   // "https://nemakunkudiaspora.org",
 ]);
@@ -47,6 +54,7 @@ const corsOptions = {
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
+
 app.use(cors(corsOptions));
 // Also reply to preflight quickly
 app.options("*", cors(corsOptions));
@@ -61,8 +69,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// ---------- Serve Frontend (static files) ----------
+const frontendPath = path.join(__dirname, "Frontend");
+
+// All files in /Frontend available under /Frontend/...
+app.use("/Frontend", express.static(frontendPath));
+
+// Optionally also serve root page (homepage) from Frontend index
+// Visiting just "/" will show the website, not raw text.
+app.get("/", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
+
 // ---------- Health & Diagnostics ----------
-app.get("/", (_req, res) => {
+app.get("/api", (_req, res) => {
   res.send("✅ Nema Kunku Diaspora API is running…");
 });
 
@@ -96,28 +116,15 @@ mongoose
     // keep running; app still serves 500s until DB is up
   });
 
-// ---------- Port helper: find a free port ----------
-function listenOnFreePort(startPort) {
-  let port = startPort;
-
-  const server = app
-    .listen(port, () => {
-      console.log(`🚀 Server running at http://localhost:${port}`);
-    })
-    .on("error", (err) => {
-      if (err && err.code === "EADDRINUSE") {
-        console.warn(`⚠️  Port ${port} in use. Trying ${port + 1}…`);
-        port += 1;
-        setTimeout(() => {
-          server.close?.();
-          listenOnFreePort(port);
-        }, 200);
-      } else {
-        console.error("❌ Server error:", err);
-        process.exit(1);
-      }
-    });
-}
+// ---------- Fallback: send SPA-ish frontend for unknown routes ----------
+app.get("*", (req, res, next) => {
+  // If it's clearly an API route, skip to 404/handlers
+  if (req.path.startsWith("/api/")) return next();
+  // Otherwise, send the main index or a simple 404 page
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
 
 // ---------- Start ----------
-listenOnFreePort(DEFAULT_PORT);
+app.listen(DEFAULT_PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${DEFAULT_PORT}`);
+});

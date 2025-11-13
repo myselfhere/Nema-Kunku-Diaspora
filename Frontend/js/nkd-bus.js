@@ -18,7 +18,8 @@ function load(key, d = null) {
 }
 
 /* ---------------- API Base ---------------- */
-const DEFAULT_API = "http://localhost:5001/api";
+// ⬇️ IMPORTANT: use Render URL now, NOT localhost
+const DEFAULT_API = "https://nema-kunku-diaspora.onrender.com/api";
 
 export function setApiBase(url) { save(LS.api, url || DEFAULT_API); }
 export function getApiBase() { return load(LS.api, DEFAULT_API); }
