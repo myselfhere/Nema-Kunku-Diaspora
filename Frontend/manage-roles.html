@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manage Roles | Nema Kunku Diaspora</title>
+  <link rel="stylesheet" href="admin-style.css" />
+</head>
+<body>
+  <!-- Topbar gets injected by topbar.js -->
+  <main class="admin-shell">
+    <h1 class="page-title">Manage Roles</h1>
+
+    <section class="card">
+      <div class="card-header">
+        <div class="card-title">Administrators & Staff</div>
+        <div class="card-actions">
+          <input id="searchInput" class="input" placeholder="Search member ID, name, email, country" />
+          <button id="addStaffBtn" class="btn btn--primary">+ Add Staff</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+            <tr>
+              <th>Member ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Country</th>
+              <th>Role</th>
+              <th style="width:160px">Actions</th>
+            </tr>
+            </thead>
+            <tbody id="tbody">
+              <!-- rows injected -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <p class="admin-footer">© 2025 Nema Kunku Diaspora. All rights reserved.</p>
+  </main>
+
+  <!-- Add / Edit Staff Modal -->
+  <dialog id="addModal" class="modal">
+    <form method="dialog" class="modal__card">
+      <div class="modal__header">
+        <div class="modal__title">Add / Update Staff Role</div>
+      </div>
+      <div class="modal__body">
+        <label class="label">Select member</label>
+        <select id="memberPicker" class="input"></select>
+
+        <label class="label mt-12">Role</label>
+        <select id="rolePicker" class="input">
+          <option value="admin">admin</option>
+          <option value="financial">financial</option>
+          <option value="project-manager">project-manager</option>
+          <option value="secretary">secretary</option>
+          <option value="viewer">viewer</option>
+          <option value="member">member (remove from staff)</option>
+        </select>
+      </div>
+      <div class="modal__footer">
+        <button id="cancelAddBtn" class="btn">Cancel</button>
+        <button id="confirmAddBtn" class="btn btn--primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Scripts -->
+  <script type="module" src="js/topbar.js"></script>
+  <script type="module" src="js/manage-roles.js"></script>
+</body>
+</html>

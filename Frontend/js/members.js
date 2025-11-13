@@ -1,0 +1,150 @@
+// Frontend/js/members.js
+// Simple localStorage member store for NKD.
+// - Seeds NKD001..NKD065 if none exist
+// - Dates stored/shown as DD-MM-YYYY
+// - Exposes helpers for nextId, upsert, delete, etc.
+
+(function () {
+  const LS_KEY = "nkd_members";
+
+  // ---------- DATE HELPERS (DD-MM-YYYY) ----------
+  function toDMY(date) {
+    // accepts Date or string "YYYY-MM-DD" / "DD-MM-YYYY"
+    if (!date) return "";
+    if (date instanceof Date && !isNaN(date)) {
+      const dd = String(date.getDate()).padStart(2, "0");
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const yyyy = date.getFullYear();
+      return `${dd}-${mm}-${yyyy}`;
+    }
+    const s = String(date);
+    const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (ymd) return `${ymd[3]}-${ymd[2]}-${ymd[1]}`;
+    const dmy = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    return dmy ? s : s; // leave as-is if already DMY or unknown
+  }
+
+  function isDMY(s) {
+    return /^(\d{2})-(\d{2})-(\d{4})$/.test(String(s || ""));
+  }
+
+  // ---------- SEED ----------
+  function seedEmptyMembers() {
+    const out = [];
+    for (let i = 1; i <= 65; i++) {
+      const id = "NKD" + String(i).padStart(3, "0");
+      out.push({
+        memberId: id,
+        name: "",
+        email: "",
+        phone: "",
+        country: "",
+        position: "Member",
+        role: "member",            // default; change via admin
+        contributionPlan: "",
+        memberSince: "",           // use DD-MM-YYYY
+        contactMethod: "",
+        totalPaidGMD: 0,
+        mustChangePassword: true,
+      });
+    }
+    return out;
+  }
+
+  // ---------- STORAGE ----------
+  function load() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) {
+        const seeded = seedEmptyMembers();
+        localStorage.setItem(LS_KEY, JSON.stringify(seeded));
+        return seeded;
+      }
+      const parsed = JSON.parse(raw);
+      // Ensure dates appear as DD-MM-YYYY in memory (don’t re-save yet)
+      parsed.forEach((m) => (m.memberSince = toDMY(m.memberSince)));
+      return parsed;
+    } catch (e) {
+      console.error("Failed to load NKD members:", e);
+      const seeded = seedEmptyMembers();
+      localStorage.setItem(LS_KEY, JSON.stringify(seeded));
+      return seeded;
+    }
+  }
+
+  function save(list) {
+    localStorage.setItem(LS_KEY, JSON.stringify(list));
+    cache.list = list;
+  }
+
+  const cache = { list: load() };
+
+  // ---------- CRUD + UTILS ----------
+  function findById(memberId) {
+    return cache.list.find((m) => m.memberId === memberId) || null;
+  }
+
+  function upsert(member) {
+    // Always keep date as DD-MM-YYYY
+    if (member.memberSince) member.memberSince = toDMY(member.memberSince);
+
+    const idx = cache.list.findIndex((m) => m.memberId === member.memberId);
+    if (idx >= 0) {
+      cache.list[idx] = { ...cache.list[idx], ...member };
+    } else {
+      cache.list.push(member);
+    }
+    save(cache.list);
+  }
+
+  function remove(memberId) {
+    const next = cache.list.filter((m) => m.memberId !== memberId);
+    save(next);
+  }
+
+  function nextMemberId() {
+    // find max existing 3-digit number, return next as NKD###
+    let max = 0;
+    cache.list.forEach((m) => {
+      const n = Number(String(m.memberId || "").replace("NKD", ""));
+      if (!Number.isNaN(n)) max = Math.max(max, n);
+    });
+    return "NKD" + String(max + 1).padStart(3, "0");
+  }
+
+  // ---------- BATCH HELPERS (one-click buttons) ----------
+  function backfillEmptyMemberSince(defaultDate = "03-01-2018") {
+    const updated = cache.list.map((m) => {
+      const empty = !m.memberSince || String(m.memberSince).trim() === "";
+      return empty ? { ...m, memberSince: defaultDate } : m;
+    });
+    save(updated);
+    return updated.filter((m) => m.memberSince === defaultDate).length;
+  }
+
+  function normalizeYMDToDMY() {
+    const updated = cache.list.map((m) => {
+      const prev = m.memberSince;
+      const fixed = toDMY(prev);
+      return fixed !== prev ? { ...m, memberSince: fixed } : m;
+    });
+    save(updated);
+    return true;
+  }
+
+  // ---------- expose ----------
+  window.NKDMembers = {
+    get list() {
+      return cache.list;
+    },
+    save,
+    findById,
+    upsert,
+    remove,
+    nextMemberId,
+    backfillEmptyMemberSince,
+    normalizeYMDToDMY,
+    isDMY,
+    toDMY,
+  };
+})();

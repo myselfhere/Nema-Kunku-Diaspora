@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Meeting Attendance — Nema Kunku Diaspora</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="icon" type="image/png" href="Nema Kunku Diaspora Logo.png"/>
+</head>
+<body>
+  <!-- Nav -->
+  <nav class="navbar">
+    <ul class="nav-menu">
+      <li><a href="admin-dashboard.html">Dashboard</a></li>
+      <li><a href="admin-members.html">Members</a></li>
+      <li><a class="active" href="meeting.html">Meetings</a></li>
+      <li><a href="admin-contributions.html">Contributions</a></li>
+      <li><a href="expenditures.html">Expenditures</a></li>
+      <li><a href="login.html" id="logoutLink">Logout</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content" style="max-width:1100px;margin-inline:auto;">
+    <!-- Header -->
+    <section class="hero" style="margin-bottom:10px;">
+      <h1 id="pageTitle">Meeting Attendance</h1>
+      <p class="lead">
+        Mark who attended this meeting. Date is shown as <strong>DD-MM-YYYY</strong>.
+      </p>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px;">
+        <a href="meeting.html" class="cta-button secondary">← Back to Meetings</a>
+        <span id="meetingMeta" class="badge" style="background:#f0fff0;border:1px solid #cfe9cf;border-radius:6px;padding:6px 10px;">Loading…</span>
+        <span id="statBadge" class="badge" style="background:#fff7e6;border:1px solid #f3d19c;border-radius:6px;padding:6px 10px;">Present — / Total —</span>
+      </div>
+    </section>
+
+    <!-- Controls -->
+    <section class="section" style="background:#fff;border:1px solid #dcefdc;border-radius:10px;padding:14px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <input id="searchBox" type="text" placeholder="Search by name or Member ID…" style="flex:1;min-width:240px;padding:10px;border:1px solid #ccc;border-radius:8px;"/>
+        <button id="markAllBtn" class="cta-button">Mark All Present</button>
+        <button id="clearAllBtn" class="cta-button secondary">Clear All</button>
+        <button id="saveBtn" class="cta-button">Save Attendance</button>
+        <button id="exportBtn" class="cta-button secondary">Export CSV</button>
+        <span id="msg" style="margin-left:auto;"></span>
+      </div>
+    </section>
+
+    <!-- Attendance table -->
+    <section class="section" style="margin-top:12px;background:#fff;border:1px solid #dcefdc;border-radius:10px;padding:6px;">
+      <div class="table-wrap" style="overflow:auto;">
+        <table class="project-table" id="attTable">
+          <thead>
+            <tr>
+              <th style="min-width:120px;">Member ID</th>
+              <th style="min-width:240px;">Name</th>
+              <th style="min-width:120px;">Country</th>
+              <th style="min-width:110px;">Present</th>
+              <th style="min-width:260px;">Remarks</th>
+            </tr>
+          </thead>
+          <tbody id="attTbody">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+      <p id="emptyNote" style="margin:10px;display:none;">No members found. Add members first in <a href="admin-members.html">Members</a>.</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 Nema Kunku Diaspora. All rights reserved.</p>
+  </footer>
+
+  <script src="js/meeting-attendance.js"></script>
+</body>
+</html>

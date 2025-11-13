@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Financial Dashboard — Nema Kunku Diaspora</title>
+  <link rel="stylesheet" href="admin-style.css"/>
+  <style>
+    /* small extras for finance visuals */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:0 16px 16px}
+    .stat-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
+    .stat-label{font-weight:800;color:#2f3a2f}
+    .stat-value{font-size:28px;font-weight:900;color:var(--green-900);margin-top:4px}
+    .stat-sub{color:var(--muted);font-size:12px}
+
+    .grid-two{display:grid;grid-template-columns:2fr 1.2fr;gap:16px;margin:0 16px}
+    .legend{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:8px}
+    .dot{display:inline-block;width:10px;height:10px;border-radius:999px;background:#2e7d32}
+    .dot-2{background:#d6336c}
+    .spark{display:flex;gap:6px;align-items:flex-end;height:80px}
+    .bar{width:14px;background:#2e7d32;opacity:.9;border-radius:4px 4px 0 0}
+    .bar.red{background:#d6336c}
+
+    .grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .toolbar .input, .toolbar select, .toolbar input[type="date"]{height:44px}
+    .pill{display:inline-flex;align-items:center;padding:6px 10px;background:#eef7ef;border:1px solid #d8e8d8;border-radius:999px;gap:8px;margin:4px 6px 0 0}
+    .pill-row{display:flex;flex-wrap:wrap}
+
+    .badge{display:inline-block;padding:3px 8px;border-radius:999px;background:#eaf3ec;color:#2e7d32;font-weight:700}
+    .nowrap{white-space:nowrap}
+
+    @media (max-width:1024px){ .grid-two{grid-template-columns:1fr} .stats-grid{grid-template-columns:repeat(2,1fr)} }
+    @media (max-width:640px){ .stats-grid{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+      <nav class="admin-nav" id="adminNav">
+        <a href="admin-dashboard.html" data-key="dashboard">Dashboard</a>
+        <a href="admin-members.html" data-key="members">Members</a>
+        <a href="admin-contributions.html" data-key="contributions">Contributions</a>
+        <a href="admin-expenditures.html" data-key="expenditures">Expenditures</a>
+        <a href="admin-projects.html" data-key="projects">Projects</a>
+        <a href="admin-meetings.html" data-key="meetings">Meetings</a>
+        <a href="admin-settings.html" data-key="settings">Settings</a>
+      </nav>
+      <div class="admin-user">
+        <span>Salme Ture • <strong>admin</strong></span>
+        <a href="login.html">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="admin-shell">
+    <h1 class="page-title">Financial Dashboard</h1>
+
+    <!-- Quick Actions -->
+    <section class="card" style="margin:0 16px 16px">
+      <div class="card-header">Quick Actions</div>
+      <div class="card-body">
+        <a class="btn btn-primary" href="admin-contributions.html">Record Contribution</a>
+        <a class="btn btn-secondary" href="admin-expenditures.html">Record Expenditure</a>
+        <a class="btn btn-secondary" href="admin-projects.html">Projects</a>
+        <a class="btn btn-secondary" href="admin-members.html">Members</a>
+      </div>
+    </section>
+
+    <!-- KPIs -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Income (EUR)</div>
+        <div class="stat-value" id="kpiIncEUR">€0.00</div>
+        <div class="stat-sub">This year (Contributions)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Income (GMD)</div>
+        <div class="stat-value" id="kpiIncGMD">D0.00</div>
+        <div class="stat-sub">This year (Contributions)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Expenses (All)</div>
+        <div class="stat-value" id="kpiExp">€0.00 / D0.00</div>
+        <div class="stat-sub">This year (All categories)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Net Position</div>
+        <div class="stat-value" id="kpiNet">€0.00 / D0.00</div>
+        <div class="stat-sub">Income − Expenses</div>
+      </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="card" style="margin:0 16px 16px">
+      <div class="card-header">Find & Filter</div>
+      <div class="card-body">
+        <div class="toolbar grid-4">
+          <input id="q" class="input" placeholder="Search receipts, payees, remarks…"/>
+          <input id="from" type="date"/>
+          <input id="to" type="date"/>
+          <select id="method">
+            <option value="">All methods</option>
+            <option>Cash</option>
+            <option>Bank Transfer</option>
+            <option>Mobile Money</option>
+          </select>
+        </div>
+        <div class="row gap" style="margin-top:10px">
+          <button id="btnReset" class="btn">Reset</button>
+          <button id="btnExport" class="btn btn-secondary">Export CSV</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Two Columns -->
+    <section class="grid-two">
+      <!-- LEFT -->
+      <div class="col-left">
+        <!-- Inflow / Outflow mini chart -->
+        <section class="card">
+          <div class="card-header">Monthly Inflow vs Outflow (This Year)</div>
+          <div class="card-body">
+            <div class="legend">
+              <span class="dot"></span> Inflow (Contributions)
+              <span class="dot dot-2"></span> Outflow (Expenditures)
+            </div>
+            <div id="miniBars" class="spark" aria-label="Monthly bars"></div>
+            <div class="pill-row" id="monthsRow"></div>
+          </div>
+        </section>
+
+        <!-- Contributions table -->
+        <section class="card" style="margin-top:16px">
+          <div class="card-header">Recent Contributions</div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="table-mini" id="tblContrib">
+                <thead>
+                  <tr>
+                    <th>Date</th><th>Receipt</th><th>Member</th>
+                    <th class="right">EUR</th><th class="right">GMD</th><th>Method</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <p class="muted" id="cEmpty" style="display:none">No contributions found.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Expenditures table -->
+        <section class="card" style="margin-top:16px">
+          <div class="card-header">Recent Expenditures</div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="table-mini" id="tblExp">
+                <thead>
+                  <tr>
+                    <th>Date</th><th>Ref</th><th>Payee</th><th>Category</th>
+                    <th class="right">EUR</th><th class="right">GMD</th><th>Method</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <p class="muted" id="eEmpty" style="display:none">No expenditures found.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="col-right">
+        <!-- Category breakdown -->
+        <section class="card">
+          <div class="card-header">Expenses by Category</div>
+          <div class="card-body">
+            <table class="table-mini" id="tblCat">
+              <thead><tr><th>Category</th><th class="right">EUR</th><th class="right">GMD</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Method breakdown -->
+        <section class="card" style="margin-top:16px">
+          <div class="card-header">Contributions by Method</div>
+          <div class="card-body">
+            <table class="table-mini" id="tblMethod">
+              <thead><tr><th>Method</th><th class="right">Count</th><th class="right">EUR</th><th class="right">GMD</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Snapshot -->
+        <section class="card" style="margin-top:16px">
+          <div class="card-header">Snapshot</div>
+          <div class="card-body">
+            <p><strong>Deadline:</strong> Annual contributions due by <strong>31 Dec 2025</strong>.<br/>
+               <strong>Penalties</strong> for 2018–2024 arrears apply from <strong>1 Sep 2025</strong>.</p>
+            <p class="muted">All totals reflect your current filter (date/method).</p>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- NAV ACTIVE + MOBILE -->
+  <script>
+    (function(){
+      const btn=document.querySelector('.menu-toggle'), nav=document.getElementById('adminNav');
+      if(btn&&nav) btn.addEventListener('click',()=>nav.classList.toggle('active'));
+      const map={'admin-dashboard.html':'dashboard','admin-members.html':'members','admin-contributions.html':'contributions','admin-expenditures.html':'expenditures','admin-projects.html':'projects','admin-meetings.html':'meetings','admin-settings.html':'settings'};
+      const key=map[(location.pathname.split('/').pop()||'').toLowerCase()];
+      if(key) document.querySelectorAll('.admin-nav a[data-key]').forEach(a=>a.dataset.key===key&&a.classList.add('active'));
+    })();
+  </script>
+
+  <!-- PAGE LOGIC -->
+  <script type="module">
+    import { api } from './js/nkd-bus.js';
+
+    const money=(v)=>Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+    const qs=s=>document.querySelector(s);
+
+    async function loadKPIs(params){
+      try{
+        const q = params ? ('?'+new URLSearchParams(params).toString()) : '';
+        const fin = await api.get('/finance/summary'+q); // {incEUR,incGMD,expEUR,expGMD,netEUR,netGMD}
+        qs('#kpiIncEUR').textContent = '€'+money(fin?.incEUR);
+        qs('#kpiIncGMD').textContent = 'D'+money(fin?.incGMD);
+        qs('#kpiExp').textContent    = `€${money(fin?.expEUR)} / D${money(fin?.expGMD)}`;
+        qs('#kpiNet').textContent    = `€${money(fin?.netEUR)} / D${money(fin?.netGMD)}`;
+      }catch(e){ console.warn('KPIs failed',e); }
+    }
+
+    async function loadMonthly(){
+      try{
+        const res = await api.get('/finance/monthly?year=this'); // [{m, inflowEUR, outflowEUR}]
+        const rows = res?.data || res || [];
+        const max = Math.max(1, ...rows.map(r=>Math.max(r.inflowEUR||0, r.outflowEUR||0)));
+        const wrap = qs('#miniBars'); wrap.innerHTML='';
+        const monthRow = qs('#monthsRow'); monthRow.innerHTML='';
+        rows.forEach(r=>{
+          const inflowH = Math.round((r.inflowEUR||0)/max*80);
+          const outflowH= Math.round((r.outflowEUR||0)/max*80);
+          const col = document.createElement('div');
+          col.style.display='flex'; col.style.flexDirection='column'; col.style.alignItems='center'; col.style.gap='4px';
+          const grp = document.createElement('div');
+          grp.style.display='flex'; grp.style.gap='4px'; grp.style.alignItems='flex-end';
+          const b1=document.createElement('div'); b1.className='bar'; b1.style.height=inflowH+'px';
+          const b2=document.createElement('div'); b2.className='bar red'; b2.style.height=outflowH+'px';
+          grp.appendChild(b1); grp.appendChild(b2);
+          col.appendChild(grp);
+          wrap.appendChild(col);
+
+          const pill=document.createElement('span'); pill.className='pill';
+          pill.textContent=r.m||'';
+          monthRow.appendChild(pill);
+        });
+      }catch(e){ console.warn('Monthly failed',e); }
+    }
+
+    function renderTable(tbodySel, emptySel, rows, mapRow){
+      const tb=qs(tbodySel); const empty=qs(emptySel);
+      if(!rows?.length){ empty.style.display='block'; tb.innerHTML=''; return; }
+      empty.style.display='none';
+      tb.innerHTML = rows.map(mapRow).join('');
+    }
+
+    async function loadRecentContrib(params){
+      try{
+        const q = new URLSearchParams({...params, limit:15, sort:'-date'});
+        const res = await api.get('/contributions/search?'+q.toString());
+        const rows = res?.data || res || [];
+        renderTable('#tblContrib tbody','#cEmpty',rows, r=>`
+          <tr>
+            <td>${r.date?new Date(r.date).toLocaleDateString():''}</td>
+            <td>${r.receipt||r.receiptNumber||''}</td>
+            <td>${r.memberName||r.member||'-'}</td>
+            <td class="right">€${money(r.amountEUR)}</td>
+            <td class="right">D${money(r.amountGMD)}</td>
+            <td>${r.paymentMethod||r.method||'-'}</td>
+          </tr>
+        `);
+      }catch(e){ console.warn('Contrib failed',e); renderTable('#tblContrib tbody','#cEmpty',[],()=>'');}
+    }
+
+    async function loadRecentExp(params){
+      try{
+        const q = new URLSearchParams({...params, limit:15, sort:'-date'});
+        const res = await api.get('/expenditures/search?'+q.toString());
+        const rows = res?.data || res || [];
+        renderTable('#tblExp tbody','#eEmpty',rows, r=>`
+          <tr>
+            <td>${r.date?new Date(r.date).toLocaleDateString():''}</td>
+            <td>${r.reference||r.refNumber||r.expRef||''}</td>
+            <td>${r.payee||'-'}</td>
+            <td>${r.category||'-'}</td>
+            <td class="right">€${money(r.amountEUR)}</td>
+            <td class="right">D${money(r.amountGMD)}</td>
+            <td>${r.paymentMethod||r.method||'-'}</td>
+          </tr>
+        `);
+      }catch(e){ console.warn('Exp failed',e); renderTable('#tblExp tbody','#eEmpty',[],()=>'');}
+    }
+
+    async function loadByCategory(params){
+      try{
+        const q = params ? ('?'+new URLSearchParams(params).toString()) : '';
+        const res = await api.get('/expenditures/by-category'+q);
+        const rows = res?.data || res || [];
+        const tb = qs('#tblCat tbody');
+        tb.innerHTML = rows.map(r=>`
+          <tr><td>${r.category||'-'}</td><td class="right">€${money(r.eur)}</td><td class="right">D${money(r.gmd)}</td></tr>
+        `).join('');
+      }catch(e){ console.warn('Cat failed',e); qs('#tblCat tbody').innerHTML=''; }
+    }
+
+    async function loadByMethod(params){
+      try{
+        const q = params ? ('?'+new URLSearchParams(params).toString()) : '';
+        const res = await api.get('/contributions/by-method'+q); // [{method,count,eur,gmd}]
+        const rows = res?.data || res || [];
+        const tb = qs('#tblMethod tbody');
+        tb.innerHTML = rows.map(r=>`
+          <tr><td>${r.method||'-'}</td><td class="right">${r.count||0}</td><td class="right">€${money(r.eur)}</td><td class="right">D${money(r.gmd)}</td></tr>
+        `).join('');
+      }catch(e){ console.warn('Method failed',e); qs('#tblMethod tbody').innerHTML=''; }
+    }
+
+    // Filters
+    const paramsFromUI=()=>({
+      q: (qs('#q')?.value||'').trim(),
+      from: qs('#from')?.value||'',
+      to: qs('#to')?.value||'',
+      method: qs('#method')?.value||''
+    });
+
+    async function refreshAll(){
+      const p=paramsFromUI();
+      await Promise.all([
+        loadKPIs(p),
+        loadMonthly(),
+        loadRecentContrib(p),
+        loadRecentExp(p),
+        loadByCategory(p),
+        loadByMethod(p)
+      ]);
+    }
+
+    // Export CSV (contrib+exp combined view under current filters)
+    document.getElementById('btnExport').addEventListener('click', async ()=>{
+      const p=paramsFromUI();
+      const [c,e]=await Promise.all([
+        api.get('/contributions/search?'+new URLSearchParams({...p,limit:5000}).toString()),
+        api.get('/expenditures/search?'+new URLSearchParams({...p,limit:5000}).toString())
+      ]);
+      const contrib=(c?.data||c||[]).map(r=>[
+        r.date?new Date(r.date).toISOString().slice(0,10):'',
+        'Contribution',
+        r.receipt||r.receiptNumber||'',
+        r.memberName||r.member||'',
+        money(r.amountEUR), money(r.amountGMD),
+        r.paymentMethod||r.method||'',
+        (r.remarks||'').toString().replaceAll(',',';')
+      ]);
+      const exp=(e?.data||e||[]).map(r=>[
+        r.date?new Date(r.date).toISOString().slice(0,10):'',
+        'Expenditure',
+        r.reference||r.refNumber||r.expRef||'',
+        r.payee||'',
+        money(r.amountEUR), money(r.amountGMD),
+        r.paymentMethod||r.method||'',
+        (r.description||'').toString().replaceAll(',',';')
+      ]);
+      const header=['Date','Type','Ref/Receipt','Party','EUR','GMD','Method','Notes'];
+      const csv=[header,...contrib,...exp].map(r=>r.join(',')).join('\n');
+      const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download='finance-export.csv'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    // Reset
+    document.getElementById('btnReset').addEventListener('click',()=>{
+      qs('#q').value=''; qs('#from').value=''; qs('#to').value=''; qs('#method').value='';
+      refreshAll();
+    });
+
+    // Reactive search
+    ['q','from','to','method'].forEach(id=>{
+      qs('#'+id).addEventListener('input', ()=>{ clearTimeout(window.__t); window.__t=setTimeout(refreshAll,300); });
+      qs('#'+id).addEventListener('change', ()=>{ clearTimeout(window.__t); window.__t=setTimeout(refreshAll,50); });
+    });
+
+    // Init
+    refreshAll();
+  </script>
+</body>
+</html>

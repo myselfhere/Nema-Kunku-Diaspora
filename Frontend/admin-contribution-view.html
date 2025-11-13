@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>View Contribution — Admin</title>
+  <link rel="stylesheet" href="admin-style.css" />
+  <style>
+    .detail-grid {display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .label{font-weight:600;color:#2e7d32}
+    @media (max-width:800px){.detail-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+      <nav class="admin-nav" id="adminNav">
+        <a href="admin-dashboard.html">Dashboard</a>
+        <a href="admin-members.html">Members</a>
+        <a href="admin-contributions.html" class="active">Contributions</a>
+        <a href="admin-expenditures.html">Expenditures</a>
+        <a href="admin-projects.html">Projects</a>
+        <a href="admin-meetings.html">Meetings</a>
+        <a href="admin-settings.html">Settings</a>
+      </nav>
+      <div class="admin-user">
+        <span data-user-slot>Offline Admin • admin</span>
+        <a href="login.html">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <h1 class="page-title">Contribution Details</h1>
+
+    <section class="card">
+      <div class="card-header">Receipt Information</div>
+      <div class="card-body">
+        <div id="detailWrap" class="detail-grid">
+          <div><span class="label">Receipt:</span> <span id="receipt"></span></div>
+          <div><span class="label">Date:</span> <span id="date"></span></div>
+          <div><span class="label">Member Name:</span> <span id="memberName"></span></div>
+          <div><span class="label">Member ID:</span> <span id="memberId"></span></div>
+          <div><span class="label">Contribution Plan:</span> <span id="plan"></span></div>
+          <div><span class="label">Payment Method:</span> <span id="method"></span></div>
+          <div><span class="label">Amount (EUR):</span> <span id="amountEUR"></span></div>
+          <div><span class="label">Amount (GMD):</span> <span id="amountGMD"></span></div>
+          <div><span class="label">Position:</span> <span id="position"></span></div>
+          <div><span class="label">Confirmed By:</span> <span id="confirmedBy"></span></div>
+          <div style="grid-column:1/-1"><span class="label">Remarks:</span><br><span id="remarks"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card mt-16">
+      <div class="card-body right">
+        <a class="btn btn-light" href="admin-contributions.html">← Back to List</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <script type="module">
+    import { get, getUser } from "./js/nkd-bus.js";
+    const u = getUser();
+    document.querySelector("[data-user-slot]").textContent = `${u?.name || 'Offline Admin'} • ${u?.role || 'admin'}`;
+    const btn=document.querySelector('.menu-toggle'); const nav=document.getElementById('adminNav');
+    btn && nav && btn.addEventListener('click',()=>nav.classList.toggle('active'));
+
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
+
+    const pad2=n=>String(n).padStart(2,"0");
+    const dstr=v=>{ if(!v)return""; const d=new Date(v); return `${pad2(d.getDate())}-${pad2(d.getMonth()+1)}-${d.getFullYear()}`; };
+
+    if (!id) {
+      document.getElementById("detailWrap").innerHTML = "<p class='muted'>No record ID provided.</p>";
+    } else {
+      get(`/api/contributions/${id}`).then(r=>{
+        document.getElementById("receipt").textContent    = r.receiptNumber || r.receipt || "";
+        document.getElementById("date").textContent       = dstr(r.date);
+        document.getElementById("memberName").textContent = r.memberName || "";
+        document.getElementById("memberId").textContent   = r.memberId || "";
+        document.getElementById("plan").textContent       = r.contributionPlan || "";
+        document.getElementById("method").textContent     = r.paymentMethod || "";
+        document.getElementById("amountEUR").textContent  = "€" + (r.amountEUR ?? 0);
+        document.getElementById("amountGMD").textContent  = "D" + (r.amountGMD ?? 0);
+        document.getElementById("position").textContent   = r.position || "";
+        document.getElementById("confirmedBy").textContent= r.confirmedBy || "";
+        document.getElementById("remarks").textContent    = r.remarks || "";
+      }).catch(()=>{
+        document.getElementById("detailWrap").innerHTML = "<p class='muted'>Failed to load record.</p>";
+      });
+    }
+  </script>
+</body>
+</html>

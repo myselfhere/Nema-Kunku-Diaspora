@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Dashboard — Nema Kunku Diaspora</title>
+  <link rel="stylesheet" href="admin-style.css" />
+  <style>
+    /* layout helpers */
+    .grid-5 { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:16px; }
+    @media (max-width:1280px){ .grid-5{ grid-template-columns:repeat(3,1fr);} }
+    @media (max-width:900px){ .grid-5{ grid-template-columns:repeat(2,1fr);} }
+    @media (max-width:640px){ .grid-5{ grid-template-columns:1fr; } }
+    .cards-pad{ margin-top:8px; }
+    .kpi .stat-big{ font-size:28px; font-weight:800; }
+    .sticky-header thead th{ position:sticky; top:0; z-index:1; background:#f5fbf5; }
+  </style>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+      <nav class="admin-nav" id="adminNav">
+        <a class="active" href="admin-dashboard.html">Dashboard</a>
+        <a href="admin-members.html">Members</a>
+        <a href="admin-contributions.html">Contributions</a>
+        <a href="admin-expenditures.html">Expenditures</a>
+        <a href="admin-projects.html">Projects</a>
+        <a href="admin-meetings.html">Meetings</a>
+        <a href="admin-settings.html">Settings</a>
+        <a href="login.html">Logout</a>
+      </nav>
+      <div class="admin-user"><span data-user-slot>Admin • admin</span></div>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <h1 class="page-title">Admin Dashboard</h1>
+
+    <!-- KPI STRIP -->
+    <section class="content-grid grid-5 cards-pad">
+      <div class="card kpi">
+        <div class="card-header">Total Members</div>
+        <div class="card-body">
+          <div id="kpiMembers" class="stat-big">0</div>
+          <div class="muted">Active + pending</div>
+        </div>
+      </div>
+
+      <div class="card kpi">
+        <div class="card-header">Contributions (EUR) — YTD</div>
+        <div class="card-body">
+          <div id="kpiEUR" class="stat-big">€0.00</div>
+          <div class="muted">Year to date</div>
+        </div>
+      </div>
+
+      <div class="card kpi">
+        <div class="card-header">Expenditures (GMD) — YTD</div>
+        <div class="card-body">
+          <div id="kpiGMD" class="stat-big">D0.00</div>
+          <div class="muted">Year to date</div>
+        </div>
+      </div>
+
+      <div class="card kpi">
+        <div class="card-header">Meetings Logged</div>
+        <div class="card-body">
+          <div id="kpiMeet" class="stat-big">0</div>
+          <div class="muted">Auto-counted attendance</div>
+        </div>
+      </div>
+
+      <div class="card kpi">
+        <div class="card-header">Arrears</div>
+        <div class="card-body">
+          <div id="kpiArrears" class="stat-big">0 members</div>
+          <div class="muted">€0 • D0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUICK ACTIONS -->
+    <section class="card" style="margin-top:16px;">
+      <div class="card-header">Quick Actions</div>
+      <div class="card-body row" style="gap:12px; flex-wrap:wrap;">
+        <button id="addProjectBtn" class="btn btn-primary">Add Project</button>
+        <button id="recContribBtn" class="btn btn-primary">Record Contribution</button>
+        <button id="recExpBtn" class="btn btn-primary">Record Expenditure</button>
+        <button id="logMeetingBtn" class="btn btn-primary">Log Meeting</button>
+        <button id="manageMembersBtn" class="btn btn-primary">Manage Members</button>
+      </div>
+    </section>
+
+    <!-- TWO COLUMNS: RECENT CONTRIBUTIONS + MEETINGS -->
+    <section class="content-grid" style="margin-top:16px; grid-template-columns:1fr 1fr; gap:16px;">
+      <!-- Recent contributions -->
+      <div class="card">
+        <div class="card-header row" style="justify-content:space-between; align-items:center;">
+          <span>Recent Contributions</span>
+          <a id="viewAllContrib" class="btn btn-light">View All</a>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap sticky-header">
+            <table class="table-mini">
+              <thead>
+                <tr>
+                  <th>Receipt</th>
+                  <th>Date</th>
+                  <th>Member</th>
+                  <th>EUR</th>
+                  <th>GMD</th>
+                </tr>
+              </thead>
+              <tbody id="recentContribTbody">
+                <tr><td colspan="5" class="muted">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Meetings snapshot -->
+      <div class="card">
+        <div class="card-header row" style="justify-content:space-between; align-items:center;">
+          <span>Meetings Snapshot</span>
+          <a id="viewMeetingsBtn" class="btn btn-light">View Meetings</a>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap sticky-header">
+            <table class="table-mini">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="meetingsTbody">
+                <tr><td colspan="3" class="muted">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Notices -->
+    <section class="card" style="margin-top:16px;">
+      <div class="card-header">System Notices</div>
+      <div class="card-body">
+        <ul class="muted">
+          <li>Annual contributions due by <strong>31 Dec 2025</strong>.</li>
+          <li>Penalties for <strong>2018–2024</strong> arrears apply from <strong>1 Sep 2025</strong>.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- Mobile menu + user pill -->
+  <script type="module">
+    import { getUser } from "./js/nkd-bus.js";
+    const nav = document.getElementById("adminNav");
+    const btn = document.querySelector(".menu-toggle");
+    btn?.addEventListener("click", ()=> nav?.classList.toggle("active"));
+    const u = getUser?.() || {};
+    const slot = document.querySelector("[data-user-slot]");
+    if (slot) slot.textContent = `${u?.role ? (u.role[0].toUpperCase()+u.role.slice(1)) : "Admin"} • ${u?.name || "admin"}`;
+  </script>
+
+  <!-- Controller -->
+  <script type="module" src="./js/admin-dashboard.js"></script>
+</body>
+</html>

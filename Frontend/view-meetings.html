@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Meetings | Nema Kunku Diaspora</title>
+  <link rel="icon" type="image/png" href="Nema Kunku Diaspora Logo.png"/>
+  <link rel="stylesheet" href="admin-style.css"/>
+</head>
+<body>
+  <!-- Topbar (same as other admin pages) -->
+  <header class="admin-topbar">
+    <div class="container">
+      <div class="brand">
+        <img src="Nema Kunku Diaspora Logo.png" alt="NKD" />
+        <span>Admin</span>
+      </div>
+      <nav class="topnav" aria-label="Admin navigation">
+        <a href="admin-dashboard.html">Dashboard</a>
+        <a href="admin-members.html">Members</a>
+        <a href="admin-contributions.html">Contributions</a>
+        <a href="expenditures.html">Expenditures</a>
+        <a class="active" href="view-meetings.html">Meetings</a>
+        <a href="admin-projects.html">Projects</a>
+        <a href="login.html" id="logoutLink">Logout</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <h1 class="page-title">Meetings</h1>
+
+    <!-- Controls card -->
+    <section class="card mt-16" aria-label="Filters and actions">
+      <div class="card-header">
+        <h2 class="card-title">Browse, filter, and manage attendance</h2>
+        <div class="toolbar">
+          <a class="btn btn--primary" href="create-meeting.html">Record New Meeting</a>
+          <button id="exportBtn" class="btn btn--outline">Export CSV</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="grid-3">
+          <div class="input">
+            <label for="typeFilter">Type</label>
+            <select id="typeFilter">
+              <option value="">All</option>
+              <option value="General">General</option>
+              <option value="Executive">Executive</option>
+              <option value="Special">Special</option>
+              <option value="Annual">Annual</option>
+            </select>
+          </div>
+          <div class="input">
+            <label for="memberFilter">Member</label>
+            <select id="memberFilter">
+              <!-- populated by JS -->
+            </select>
+          </div>
+          <div class="grid-2">
+            <div class="input">
+              <label for="fromDate">From (dd-mm-yyyy)</label>
+              <input id="fromDate" type="text" placeholder="dd-mm-yyyy"/>
+            </div>
+            <div class="input">
+              <label for="toDate">To (dd-mm-yyyy)</label>
+              <input id="toDate" type="text" placeholder="dd-mm-yyyy"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Table card -->
+    <section class="card mt-16" aria-label="Meetings table">
+      <div class="card-header">
+        <h2 class="card-title" id="contextTitle">All Meetings</h2>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:160px">Meeting ID</th>
+                <th style="width:140px">Type</th>
+                <th style="width:140px">Date</th>
+                <th>Notes</th>
+                <th style="width:160px">Attendance</th>
+                <th style="width:160px">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="meetTbody">
+              <tr><td colspan="6">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <p class="admin-footer">© 2025 Nema Kunku Diaspora. All rights reserved.</p>
+  </main>
+
+  <!-- Scripts -->
+  <script type="module" src="js/nkd-bus.js"></script>
+  <script type="module" src="js/view-meetings.js"></script>
+</body>
+</html>

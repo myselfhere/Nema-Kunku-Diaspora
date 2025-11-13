@@ -1,0 +1,144 @@
+<!-- contributions.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Member Contributions</title>
+  <link rel="stylesheet" href="admin-style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <ul class="nav-menu">
+      <li><a href="admin-dashboard.html">Dashboard</a></li>
+      <li><a href="members.html">Members</a></li>
+      <li><a href="projects.html">Projects</a></li>
+      <li><a href="meetings.html">Meetings</a></li>
+      <li><a href="#" onclick="logout()">Logout</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    <h1>Member Contributions</h1>
+    <section>
+      <h2>Add Contribution</h2>
+      <form id="contributionForm">
+        <input type="number" id="amountGMD" placeholder="Amount (GMD)" required>
+        <input type="number" id="amountEUR" placeholder="Amount (EUR)" required>
+        <input type="date" id="date" required>
+        <select id="paymentMethod" required>
+          <option value="Cash">Cash</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="Check">Check</option>
+        </select>
+        <input type="text" id="confirmedBy" placeholder="Confirmed By" required>
+        <input type="text" id="remarks" placeholder="Remarks">
+        <button type="submit">Save Contribution</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Contribution History</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Receipt</th>
+            <th>Date</th>
+            <th>Amount (EUR)</th>
+            <th>Amount (GMD)</th>
+            <th>Method</th>
+            <th>Confirmed By</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody">
+          <tr><td colspan="7">No records found.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2025 Nema Kunku Diaspora. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const memberId = params.get("memberId");
+
+    const form = document.getElementById("contributionForm");
+    const historyBody = document.getElementById("historyBody");
+
+    function logout() {
+      localStorage.removeItem("nkd_token");
+      localStorage.removeItem("nkd_user");
+      window.location.href = "login.html";
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const token = localStorage.getItem("nkd_token");
+      const user = JSON.parse(localStorage.getItem("nkd_user"));
+
+      const contribution = {
+        memberId,
+        date: document.getElementById("date").value,
+        amountGMD: +document.getElementById("amountGMD").value,
+        amountEUR: +document.getElementById("amountEUR").value,
+        paymentMethod: document.getElementById("paymentMethod").value,
+        confirmedBy: document.getElementById("confirmedBy").value,
+        remarks: document.getElementById("remarks").value,
+        position: user?.position || "",
+        contributionPlan: user?.contributionPlan || ""
+      };
+
+      const res = await fetch("https://nema-kunku-diaspora.onrender.com/api/contributions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(contribution)
+      });
+
+      if (res.ok) {
+        alert("Contribution saved!");
+        loadHistory();
+      } else {
+        alert("Error saving contribution");
+      }
+    });
+
+    async function loadHistory() {
+      const token = localStorage.getItem("nkd_token");
+      const res = await fetch(`https://nema-kunku-diaspora.onrender.com/api/contributions/member/${memberId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+      historyBody.innerHTML = "";
+      if (data.length === 0) {
+        historyBody.innerHTML = '<tr><td colspan="7">No records found.</td></tr>';
+        return;
+      }
+
+      data.forEach(c => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${c.receiptNumber}</td>
+          <td>${new Date(c.date).toLocaleDateString()}</td>
+          <td>€${c.amountEUR}</td>
+          <td>D${c.amountGMD}</td>
+          <td>${c.paymentMethod}</td>
+          <td>${c.confirmedBy}</td>
+          <td>${c.remarks || "—"}</td>
+        `;
+        historyBody.appendChild(tr);
+      });
+    }
+
+    loadHistory();
+  </script>
+</body>
+</html>

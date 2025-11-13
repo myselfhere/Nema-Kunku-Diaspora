@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Settings — Member</title>
+  <link rel="stylesheet" href="admin-style.css" />
+</head>
+<body>
+  <!-- NAVBAR (same as member pages) -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu" id="menuToggle">☰</button>
+
+      <nav class="admin-nav" id="adminNav">
+        <a href="member-dashboard.html" data-key="dashboard">Dashboard</a>
+        <a href="member-contributions.html" data-key="contributions">Contributions</a>
+        <a href="member-attendance.html" data-key="attendance">Attendance</a>
+        <a href="member-projects.html" data-key="projects">Projects</a>
+        <a href="member-settings.html" data-key="settings">Settings</a>
+      </nav>
+
+      <div class="admin-user">
+        <span data-user-slot>Member</span>
+        <a href="login.html" id="logoutLink">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- PAGE -->
+  <main class="admin-shell">
+    <div class="container">
+      <h1 class="page-title">My Settings</h1>
+
+      <!-- Account info -->
+      <section class="card" style="margin:0 16px 18px;">
+        <div class="card-header">Account Information</div>
+        <div class="card-body">
+          <div class="two-col">
+            <div class="form-group">
+              <label>Member ID</label>
+              <input type="text" id="memberId" readonly>
+            </div>
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="fullName" readonly>
+            </div>
+          </div>
+          <div class="two-col">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="email" readonly>
+            </div>
+            <div class="form-group">
+              <label>Contribution Plan</label>
+              <input type="text" id="plan" readonly>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Change password -->
+      <section class="card" style="margin:0 16px;">
+        <div class="card-header">Change Password</div>
+        <div class="card-body">
+          <div class="two-col">
+            <div class="form-group">
+              <label>Enter current password</label>
+              <input type="password" id="currentPwd" autocomplete="current-password" placeholder="Enter current password">
+            </div>
+            <div class="form-group">
+              <label>Enter new password</label>
+              <input type="password" id="newPwd" autocomplete="new-password" placeholder="Enter new password">
+            </div>
+          </div>
+          <div class="form-group" style="max-width:560px;">
+            <label>Confirm new password</label>
+            <input type="password" id="confirmPwd" autocomplete="new-password" placeholder="Confirm new password">
+            <div class="form-hint">Use a strong password you’ll remember.</div>
+          </div>
+          <button class="btn btn-primary" id="savePwdBtn">Save New Password</button>
+          <span id="msg" class="form-hint" style="margin-left:10px;"></span>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- Scripts -->
+  <script type="module">
+    import { activeNav, getUser, api, setUser, roleHome } from "./js/nkd-bus.js";
+
+    // nav highlight + user pill
+    activeNav("settings");
+
+    // mobile menu
+    const nav = document.getElementById("adminNav");
+    document.getElementById("menuToggle")?.addEventListener("click",()=>nav.classList.toggle("active"));
+
+    // logout -> clear cached user
+    document.getElementById("logoutLink")?.addEventListener("click",(e)=>{
+      e.preventDefault();
+      localStorage.removeItem("nkd_user");
+      location.href = "login.html";
+    });
+
+    const els = {
+      id: document.getElementById("memberId"),
+      name: document.getElementById("fullName"),
+      email: document.getElementById("email"),
+      plan: document.getElementById("plan"),
+      current: document.getElementById("currentPwd"),
+      pwd: document.getElementById("newPwd"),
+      confirm: document.getElementById("confirmPwd"),
+      save: document.getElementById("savePwdBtn"),
+      msg: document.getElementById("msg"),
+    };
+
+    function showMsg(t, ok=false){
+      els.msg.textContent = t;
+      els.msg.style.color = ok ? "#25611b" : "#b71c1c";
+    }
+
+    // load account fields
+    (async () => {
+      let me = getUser();
+      if (!me) {
+        // try fetch from API by token-less fallback (members list)
+        try {
+          const list = await api.getMembers();
+          // crude: prefer first item if nothing cached
+          if (Array.isArray(list) && list.length) me = list[0];
+        } catch {}
+      }
+      if (!me) return location.href = "login.html";
+
+      // if we only had a minimal cache, refresh a full record
+      try {
+        const id = me.memberId || me._id || me.email;
+        if (id) {
+          const full = await api.get(`/members/${encodeURIComponent(id)}`);
+          if (full && (full.memberId || full._id)) me = full;
+        }
+      } catch {}
+
+      // cache and paint
+      setUser(me);
+      els.id.value = me.memberId || me._id || "";
+      els.name.value = me.name || "";
+      els.email.value = me.email || "";
+      els.plan.value = me.contributionPlan || me.plan || "—";
+
+      // password change
+      els.save.addEventListener("click", async () => {
+        const curr = (els.current.value || "").trim();
+        const np = (els.pwd.value || "").trim();
+        const cp = (els.confirm.value || "").trim();
+
+        if (!curr || !np || !cp) return showMsg("Fill all password fields.");
+        if (np !== cp) return showMsg("New passwords do not match.");
+        if (np.length < 6) return showMsg("Use at least 6 characters.");
+
+        els.save.disabled = true; showMsg("Saving…", true);
+        const who = me._id || me.memberId || me.email;
+
+        try {
+          // Prefer a dedicated route if you made one:
+          // PUT /api/members/:id/password  {currentPassword,newPassword}
+          await api.put(`/members/${encodeURIComponent(who)}/password`, {
+            currentPassword: curr,
+            newPassword: np
+          });
+          els.current.value = els.pwd.value = els.confirm.value = "";
+          showMsg("Password updated.", true);
+        } catch {
+          // Fallback generic auth endpoint if your backend uses it
+          try {
+            await api.post("/auth/change-password", {
+              memberId: me.memberId || me.email,
+              currentPassword: curr,
+              newPassword: np
+            });
+            els.current.value = els.pwd.value = els.confirm.value = "";
+            showMsg("Password updated.", true);
+          } catch (err2) {
+            showMsg("Could not update password. Check your current password.");
+          }
+        } finally {
+          els.save.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

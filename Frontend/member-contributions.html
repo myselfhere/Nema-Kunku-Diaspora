@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Contributions — Member</title>
+  <link rel="stylesheet" href="admin-style.css" />
+  <style>
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+    @media (max-width: 900px) { .grid-3 { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .grid-3 { grid-template-columns: 1fr; } }
+    .mt-16 { margin-top: 16px; }
+    .sticky-header thead th { position: sticky; top: 0; background: #f5fbf5; z-index: 1; }
+    .row-between { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  </style>
+</head>
+
+<body>
+  <!-- NAVBAR -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+
+      <nav class="admin-nav" id="adminNav">
+        <a href="member-dashboard.html">Dashboard</a>
+        <a class="active" href="member-contributions.html">Contributions</a>
+        <a href="member-attendance.html">Attendance</a>
+        <a href="member-projects.html">Projects</a>
+        <a href="member-settings.html">Settings</a>
+      </nav>
+
+      <div class="admin-user">
+        <span data-user-slot>Member • member</span>
+        <a href="login.html">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="admin-shell">
+    <h1 class="page-title">My Contributions</h1>
+
+    <!-- ===== SUMMARY ===== -->
+    <section class="grid-3">
+      <div class="card">
+        <div class="card-header">Paid (EUR) — YTD</div>
+        <div class="card-body">
+          <div id="statEUR" class="stat-big">€0.00</div>
+          <div class="muted">Sum of contributions in EUR</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Paid (GMD) — YTD</div>
+        <div class="card-body">
+          <div id="statGMD" class="stat-big">D0.00</div>
+          <div class="muted">Sum of contributions in GMD</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Total Receipts</div>
+        <div class="card-body">
+          <div id="statCount" class="stat-big">0</div>
+          <div class="muted">All recorded payments</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TABLE ===== -->
+    <section class="card mt-16">
+      <div class="card-header row-between">
+        <span>Contribution History</span>
+        <button id="downloadCsvBtn" class="btn btn-light">Download CSV</button>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap sticky-header">
+          <table class="table-mini">
+            <thead>
+              <tr>
+                <th>Receipt</th>
+                <th>Date</th>
+                <th>Plan</th>
+                <th>Method</th>
+                <th>EUR</th>
+                <th>GMD</th>
+              </tr>
+            </thead>
+            <tbody id="contribTbody">
+              <tr><td colspan="6" class="muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== REMINDERS ===== -->
+    <section class="card mt-16">
+      <div class="card-header">Reminders</div>
+      <div class="card-body">
+        <ul class="muted">
+          <li>Annual contributions due by <strong>31 Dec 2025</strong>.</li>
+          <li>Penalties for <strong>2018–2024</strong> arrears apply from <strong>1 Sep 2025</strong>.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- ===== MENU + USER ===== -->
+  <script type="module">
+    import { getUser } from "./js/nkd-bus.js";
+    const u = getUser();
+    const slot = document.querySelector("[data-user-slot]");
+    if (slot) slot.textContent = `${u?.name || "Member"} • ${u?.role || "member"}`;
+    const btn = document.querySelector(".menu-toggle");
+    const nav = document.getElementById("adminNav");
+    if (btn && nav) btn.addEventListener("click", () => nav.classList.toggle("active"));
+  </script>
+
+  <!-- ===== CONTROLLER ===== -->
+  <script type="module" src="./js/member-contributions.js"></script>
+</body>
+</html>

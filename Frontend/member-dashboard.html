@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Member Dashboard — Nema Kunku Diaspora</title>
+
+  <!-- Use the portal/admin look & feel -->
+  <link rel="stylesheet" href="admin-style.css" />
+
+  <style>
+    /* small tweaks so cards breathe nicely on member pages */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    @media (max-width: 1100px){ .grid-4{ grid-template-columns: repeat(2,1fr);} }
+    @media (max-width: 640px){ .grid-4, .grid-2{ grid-template-columns: 1fr; } }
+
+    .stat-big { font-size: 32px; font-weight: 800; color: #1b5e20; }
+    .mt-16 { margin-top: 16px; }
+    .right  { text-align: right; }
+    .center { text-align: center; }
+    .sticky-header thead th { position: sticky; top: 0; z-index: 1; background: #f5fbf5; }
+  </style>
+</head>
+<body>
+  <!-- ===== TOP NAV ===== -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+      <nav class="admin-nav" id="memberNav">
+        <a class="active" href="member-dashboard.html">Dashboard</a>
+        <a href="member-contributions.html">Contributions</a>
+        <a href="member-attendance.html">Attendance</a>
+        <a href="member-projects.html">Projects</a>
+        <a href="member-settings.html">Settings</a>
+      </nav>
+      <div class="admin-user">
+        <span data-user-slot>Member • member</span>
+        <a id="logoutLink" href="#">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <h1 class="page-title">Welcome</h1>
+
+    <!-- KPIs -->
+    <section class="content-grid grid-4">
+      <div class="card">
+        <div class="card-header">Paid (EUR) — YTD</div>
+        <div class="card-body">
+          <div class="stat-big" id="kpiEUR">€0.00</div>
+          <div class="muted">Sum of contributions in EUR</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Paid (GMD) — YTD</div>
+        <div class="card-body">
+          <div class="stat-big" id="kpiGMD">D0.00</div>
+          <div class="muted">Sum of contributions in GMD</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Meetings Attended</div>
+        <div class="card-body">
+          <div class="stat-big" id="kpiAttend">0</div>
+          <div class="muted"><span id="kpiMissed">0</span> missed</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Arrears</div>
+        <div class="card-body">
+          <div class="stat-big" id="arrearsYears">0 yrs</div>
+          <div class="muted"><span id="arrearsEUR">€0.00</span> · <span id="arrearsGMD">D0.00</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- My Account -->
+    <section class="card mt-16">
+      <div class="card-header">My Account</div>
+      <div class="card-body">
+        <div><strong id="myAccountName">—</strong></div>
+        <div class="muted">Plan: <span id="myAccountPlan">—</span></div>
+        <div class="muted">ID: <span id="myAccountId">—</span></div>
+      </div>
+    </section>
+
+    <!-- Quick Links -->
+    <section class="card mt-16">
+      <div class="card-header">Quick Links</div>
+      <div class="card-body">
+        <div class="row wrap" style="gap:12px">
+          <a class="btn btn-secondary" id="viewReceiptsLink" href="member-receipts.html">View Receipts</a>
+          <a class="btn btn-secondary" id="viewAttendanceLink" href="member-attendance.html">View Attendance</a>
+          <a class="btn btn-secondary" href="member-settings.html#password">Change Password</a>
+          <button class="btn btn-primary" id="downloadCsvBtn">Download Statement (CSV)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Lists -->
+    <section class="grid-2 mt-16">
+      <div class="card">
+        <div class="card-header row between">
+          <span>Recent Contributions</span>
+          <button class="btn btn-light" id="viewAllContribBtn">View All</button>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap sticky-header">
+            <table class="table-mini">
+              <thead>
+                <tr>
+                  <th>Receipt</th>
+                  <th>Date</th>
+                  <th>Plan</th>
+                  <th>Method</th>
+                  <th>EUR</th>
+                  <th>GMD</th>
+                </tr>
+              </thead>
+              <tbody id="recentContribTbody">
+                <tr><td colspan="6" class="muted">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header row between">
+          <span>Recent Meetings</span>
+          <button class="btn btn-light" id="viewAllMeetBtn">View All</button>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap sticky-header">
+            <table class="table-mini">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Date</th>
+                  <th>Title / Notes</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="recentMeetTbody">
+                <tr><td colspan="4" class="muted">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- Mini user pill + logout wiring -->
+  <script type="module">
+    // Fill the user pill from localStorage (set at login)
+    try {
+      const u = JSON.parse(localStorage.getItem("nkd_user") || "null");
+      const slot = document.querySelector("[data-user-slot]");
+      if (slot) slot.textContent = `${u?.name || "Member"} • member`;
+    } catch {}
+
+    // Mobile menu toggle
+    const btn = document.querySelector(".menu-toggle");
+    const nav = document.getElementById("memberNav");
+    btn && nav && btn.addEventListener("click", () => nav.classList.toggle("active"));
+
+    // Logout clears local session
+    document.getElementById("logoutLink")?.addEventListener("click", (e)=>{
+      e.preventDefault();
+      localStorage.removeItem("nkd_user");
+      location.href = "login.html";
+    });
+  </script>
+
+  <!-- Controller -->
+  <script type="module" src="./js/member-dashboard.js"></script>
+</body>
+</html>

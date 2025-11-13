@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meetings — Admin</title>
+  <link rel="stylesheet" href="admin-style.css" />
+  <style>
+    .mt-16{margin-top:16px}
+    .grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+    @media (max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:640px){.grid-4{grid-template-columns:1fr}}
+    .toolbar{display:grid;grid-template-columns:1fr 180px 180px 180px auto;gap:12px;align-items:center}
+    @media (max-width:900px){.toolbar{grid-template-columns:1fr 1fr;gap:10px}}
+    .sticky-header thead th{position:sticky;top:0;z-index:1;background:#f5fbf5}
+    .stat-big{font-weight:900;font-size:28px;color:#205a2f}
+    .btn-light{background:#eaf3ec;color:#2e7d32}
+  </style>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+
+      <nav class="admin-nav" id="adminNav">
+        <a href="admin-dashboard.html">Dashboard</a>
+        <a href="admin-members.html">Members</a>
+        <a href="admin-contributions.html">Contributions</a>
+        <a href="admin-expenditures.html">Expenditures</a>
+        <a href="admin-projects.html">Projects</a>
+        <a href="admin-meetings.html" class="active">Meetings</a>
+        <a href="admin-settings.html">Settings</a>
+      </nav>
+
+      <div class="admin-user">
+        <span data-user-slot>Offline Admin • admin</span>
+        <a href="login.html">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <h1 class="page-title">Meetings</h1>
+
+    <!-- ===== STATS ===== -->
+    <section class="content-grid grid-4">
+      <div class="card">
+        <div class="card-header">TOTAL MEETINGS</div>
+        <div class="card-body"><div id="statTotal" class="stat-big">0</div><div class="muted">All recorded meetings</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">GENERAL</div>
+        <div class="card-body"><div id="statGeneral" class="stat-big">0</div><div class="muted">Monthly or regular</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">EMERGENCY</div>
+        <div class="card-body"><div id="statEmergency" class="stat-big">0</div><div class="muted">Called within 7 days</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">SPECIAL</div>
+        <div class="card-body"><div id="statSpecial" class="stat-big">0</div><div class="muted">Other occasions</div></div>
+      </div>
+    </section>
+
+    <!-- ===== FIND & FILTER ===== -->
+    <section class="card mt-16">
+      <div class="card-header">Find & Filter</div>
+      <div class="card-body">
+        <div class="toolbar">
+          <input id="q" placeholder="Search by meeting ID, topic, or notes…" />
+          <input id="date" type="date" placeholder="dd/mm/yyyy" />
+          <select id="type">
+            <option value="">All types</option>
+            <option value="general">General</option>
+            <option value="emergency">Emergency</option>
+            <option value="special">Special</option>
+          </select>
+          <select id="status">
+            <option value="">All statuses</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="held">Held</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <div class="right">
+            <a class="btn btn-primary" href="admin-meeting-add.html">+ Add Meeting</a>
+            <a class="btn btn-secondary" id="exportBtn">Export CSV</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TABLE ===== -->
+    <section class="card mt-16">
+      <div class="card-header">All Meetings</div>
+      <div class="card-body">
+        <div class="table-wrap sticky-header">
+          <table class="table-mini">
+            <thead>
+              <tr>
+                <th>Meeting ID</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Topic</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Attendees</th>
+                <th class="right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="meetingsTbody">
+              <tr><td colspan="8" class="muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="row gap mt-16 between">
+          <div class="row gap">
+            <button class="btn btn-light" id="prev">Prev</button>
+            <button class="btn btn-light" id="next">Next</button>
+          </div>
+          <span id="pageInfo" class="muted">Page 1 of 1</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- User + mobile menu -->
+  <script type="module">
+    import { getUser } from "./js/nkd-bus.js";
+    const u = getUser();
+    const slot = document.querySelector("[data-user-slot]");
+    slot && (slot.textContent = `${u?.name || "Offline Admin"} • ${u?.role || "admin"}`);
+    const btn = document.querySelector(".menu-toggle");
+    const nav = document.getElementById("adminNav");
+    btn && nav && btn.addEventListener("click", () => nav.classList.toggle("active"));
+  </script>
+
+  <!-- Controller -->
+  <script type="module" src="./js/admin-meetings.js"></script>
+</body>
+</html>

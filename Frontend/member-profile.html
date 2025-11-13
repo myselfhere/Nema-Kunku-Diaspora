@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Member Profile</title>
+  <link rel="stylesheet" href="admin-style.css"/>
+</head>
+<body>
+<header class="admin-topbar">
+  <div class="container row">
+    <nav class="admin-nav">
+      <a href="member-dashboard.html">Dashboard</a>
+      <a href="member-profile.html" class="active">Profile</a>
+      <a id="lnkAttendance" href="#">Attendance</a>
+      <a id="lnkContrib" href="#">Contributions</a>
+    </nav>
+    <div class="admin-user"><a href="login.html">Logout</a></div>
+  </div>
+</header>
+
+<main class="admin-shell container">
+  <h1 class="page-title">Member Profile</h1>
+
+  <section class="card">
+    <div class="card-header">Details</div>
+    <div class="card-body">
+      <div class="grid-2 gap-16">
+        <div>
+          <div class="muted">Member ID</div>
+          <div class="big" id="mId">—</div>
+        </div>
+        <div>
+          <div class="muted">Name</div>
+          <div class="big" id="mName">—</div>
+        </div>
+        <div>
+          <div class="muted">Email</div>
+          <div id="mEmail">—</div>
+        </div>
+        <div>
+          <div class="muted">Phone</div>
+          <div id="mPhone">—</div>
+        </div>
+        <div>
+          <div class="muted">Country</div>
+          <div id="mCountry">—</div>
+        </div>
+        <div>
+          <div class="muted">Role</div>
+          <div id="mRole">—</div>
+        </div>
+        <div>
+          <div class="muted">Plan</div>
+          <div id="mPlan">—</div>
+        </div>
+        <div>
+          <div class="muted">Member Since</div>
+          <div id="mSince">—</div>
+        </div>
+        <div>
+          <div class="muted">Status</div>
+          <div id="mStatus">—</div>
+        </div>
+        <div>
+          <div class="muted">Total Paid (GMD)</div>
+          <div id="mPaidGMD">D0.00</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="admin-footer">© 2025 Nema Kunku Diaspora</footer>
+
+<script type="module">
+  import { getParam, fetchMember, money, $ } from "./js/member-common.js";
+
+  const memberId = getParam("memberId") || "";
+  // wire cross-links
+  document.getElementById("lnkAttendance").href = `member-attendance.html?memberId=${encodeURIComponent(memberId)}`;
+  document.getElementById("lnkContrib").href    = `member-contributions.html?memberId=${encodeURIComponent(memberId)}`;
+
+  function toDMY(v){
+    try{ const d=new Date(v); const p=n=>String(n).padStart(2,"0");
+      return `${p(d.getDate())}-${p(d.getMonth()+1)}-${d.getFullYear()}`;
+    }catch{return v||"—";}
+  }
+
+  (async () => {
+    if (!memberId) return;
+    const m = await fetchMember(memberId);
+    $("#mId").textContent      = m.memberId || "—";
+    $("#mName").textContent    = m.name || "—";
+    $("#mEmail").textContent   = m.email || "—";
+    $("#mPhone").textContent   = m.phone || "—";
+    $("#mCountry").textContent = m.country || "—";
+    $("#mRole").textContent    = m.role || "member";
+    $("#mPlan").textContent    = m.contributionPlan || "—";
+    $("#mSince").textContent   = m.memberSince ? toDMY(m.memberSince) : "—";
+    $("#mStatus").textContent  = m.status || "Active";
+    $("#mPaidGMD").textContent = money(m.totalPaidGMD || 0, "D");
+  })();
+</script>
+</body>
+</html>

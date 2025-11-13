@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | Nema Kunku Diaspora</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Center form + input text + labels */
+    .login-card { text-align: center; margin: 0 auto; }
+    .login-section {
+      display: flex; align-items: center; justify-content: center;
+      min-height: calc(100vh - 150px); background: #f8fff8;
+    }
+    .login-form {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 12px; margin-top: 16px;
+    }
+    .login-form label {
+      display: block; width: 100%; text-align: center; color: #333; font-weight: 600;
+    }
+    .login-form input {
+      width: 90%; text-align: center; padding: 12px;
+      border: 1px solid #cfd8cf; border-radius: 8px; font-size: 1rem;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .login-form input:focus {
+      outline: none;
+      border-color: #2e7d32;
+      box-shadow: 0 0 0 3px rgba(46,125,50,.12);
+    }
+    .btn.primary {
+      width: 90%; height: 46px; border: none; border-radius: 8px;
+      background: #3a7722; color: #fff; font-weight: 800; font-size: 16px; cursor: pointer;
+      transition: background .2s ease;
+    }
+    .btn.primary:hover { background: #2e5f1a; }
+  </style>
+</head>
+<body>
+  <!-- ===== NAVBAR ===== -->
+  <header class="navbar">
+    <div class="container">
+      <ul class="nav-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="projects.html">Projects</a></li>
+        <li><a href="membership.html">Membership</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+        <li><a class="active" href="login.html">Login</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- ===== LOGIN SECTION ===== -->
+  <main>
+    <section class="login-section">
+      <div class="login-card">
+        <h2>Member Login</h2>
+
+        <form id="loginForm" class="login-form">
+          <label for="email">Email or Member ID</label>
+          <input id="email" type="text" placeholder="Enter your email or Member ID" required />
+
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="Enter your password" required />
+
+          <button type="button" id="loginBtn" class="btn primary">Login</button>
+        </form>
+
+        <p class="mt-12">
+          <a href="reset-password.html" class="link">Forgot your password?</a>
+        </p>
+
+        <div id="msg"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <p>© 2025 Nema Kunku Diaspora. All rights reserved.</p>
+  </footer>
+
+  <!-- ===== LOGIN LOGIC ===== -->
+  <script type="module">
+    import {
+      setUser, go, roleHome,
+      resolveMemberByIdentifier, offlineRoleFromEmail
+    } from "./js/nkd-bus.js";
+
+    const $ = (s) => document.querySelector(s);
+    const msg = $("#msg");
+    const emailEl = $("#email");
+    const passEl  = $("#password");
+    const btn     = $("#loginBtn");
+
+    const showMsg = (t, ok=false) => {
+      msg.textContent = t;
+      msg.style.color = ok ? "#1b5e20" : "#b00020";
+    };
+    const clean = (v="") => String(v||"").trim();
+
+    async function doLogin(){
+      const ident = clean(emailEl.value);
+      const pw    = clean(passEl.value);
+
+      if (!ident || !pw) return showMsg("Please enter both email/Member ID and password.");
+      if (pw !== "Password1") return showMsg("Wrong email or password.");
+
+      let profile = null;
+      try { profile = await resolveMemberByIdentifier(ident); } catch {}
+
+      // Build the user object either from API profile or from offline guess
+      let role, name, email, memberId, id;
+      if (profile) {
+        id       = profile._id || profile.memberId || profile.email || ident;
+        email    = profile.email || (ident.includes("@") ? ident : "");
+        memberId = profile.memberId || null;
+        name     = profile.name || profile.fullName || profile.memberId || ident;
+        role     = (profile.role || "").toLowerCase();
+        // If role missing on record, fallback to offline rule based on identifier
+        if (!role) role = offlineRoleFromEmail(memberId || email || ident);
+      } else {
+        // Offline fallback
+        id       = ident;
+        email    = ident.includes("@") ? ident : "";
+        memberId = ident.match(/^nkd\d+/i) ? ident.toUpperCase() : null;
+        name     = ident.includes("@") ? ident.split("@")[0] : (memberId || ident);
+        role     = offlineRoleFromEmail(ident);
+      }
+
+      const user = { id, memberId, email, name, role, mustChangePassword: false };
+
+      try {
+        setUser(user);
+        showMsg("Login successful! Redirecting…", true);
+        setTimeout(() => go(roleHome(role)), 500);
+      } catch (e){
+        console.error(e);
+        showMsg("Login failed. Please try again.");
+      }
+    }
+
+    btn.addEventListener("click", doLogin);
+    document.addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
+  </script>
+</body>
+</html>

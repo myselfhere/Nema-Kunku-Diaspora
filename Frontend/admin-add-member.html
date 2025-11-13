@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Add Member — Admin</title>
+  <link rel="stylesheet" href="admin-style.css" />
+  <style>
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media(max-width:900px){ .grid-2{ grid-template-columns:1fr; } }
+    .mt-16 { margin-top:16px; }
+    textarea { width:100%; resize:vertical; }
+  </style>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+      <nav class="admin-nav" id="adminNav">
+        <a href="admin-dashboard.html">Dashboard</a>
+        <a href="admin-members.html" class="active">Members</a>
+        <a href="admin-contributions.html">Contributions</a>
+        <a href="admin-expenditures.html">Expenditures</a>
+        <a href="admin-projects.html">Projects</a>
+        <a href="admin-meetings.html">Meetings</a>
+        <a href="admin-settings.html">Settings</a>
+      </nav>
+      <div class="admin-user">
+        <span data-user-slot>Offline Admin • admin</span>
+        <a href="login.html">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="admin-shell">
+    <div class="row space-between align-center">
+      <h1 class="page-title">Add Member</h1>
+      <div class="row gap-8">
+        <a href="admin-members.html" class="btn btn-light">← Back to Members</a>
+        <button id="saveMember" class="btn btn-primary">Save Member</button>
+      </div>
+    </div>
+
+    <!-- MEMBER INFORMATION -->
+    <section class="card mt-16">
+      <div class="card-header">Member Information</div>
+      <div class="card-body grid-2">
+        <div>
+          <label>Full Name *</label>
+          <input id="fullName" placeholder="e.g., Salme Ture" required />
+        </div>
+        <div>
+          <label>Email</label>
+          <input id="email" type="email" placeholder="name@example.com" />
+        </div>
+        <div>
+          <label>Phone</label>
+          <input id="phone" placeholder="+44..." />
+        </div>
+        <div>
+          <label>Country</label>
+          <input id="country" placeholder="United Kingdom" />
+        </div>
+        <div>
+          <label>Position (optional)</label>
+          <input id="position" placeholder="Member / Officer title" />
+        </div>
+        <div>
+          <label>Preferred Contact</label>
+          <select id="contactMethod">
+            <option>Not set</option>
+            <option>Email</option>
+            <option>Phone</option>
+            <option>WhatsApp</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- MEMBERSHIP PLAN -->
+    <section class="card mt-16">
+      <div class="card-header">Membership & Plan</div>
+      <div class="card-body grid-2">
+        <div>
+          <label>Member ID *</label>
+          <input id="memberId" placeholder="NKD001" required />
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="status">
+            <option>Active</option>
+            <option>Pending</option>
+            <option>Inactive</option>
+          </select>
+        </div>
+        <div>
+          <label>Plan</label>
+          <select id="plan">
+            <option>Annually</option>
+            <option>Semi-Annual</option>
+          </select>
+        </div>
+        <div>
+          <label>Joined</label>
+          <input id="joined" type="date" />
+        </div>
+      </div>
+    </section>
+
+    <!-- ACCOUNT ACCESS -->
+    <section class="card mt-16">
+      <div class="card-header">Account Access (Login)</div>
+      <div class="card-body grid-2">
+        <div>
+          <label>Role</label>
+          <select id="role">
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+            <option value="financial">Financial</option>
+            <option value="project-manager">Project Manager</option>
+            <option value="secretary">Secretary</option>
+            <option value="viewer">Viewer</option>
+          </select>
+        </div>
+        <div>
+          <label>Username (login)</label>
+          <input id="username" placeholder="email or member ID" />
+        </div>
+        <div>
+          <label>Temporary Password</label>
+          <div style="display:flex;gap:8px;">
+            <input id="tempPassword" placeholder="auto-generate" />
+            <button id="genPass" class="btn btn-light" type="button">Generate</button>
+          </div>
+        </div>
+        <div style="align-self:end;">
+          <label style="display:flex;gap:8px;align-items:center;">
+            <input id="mustChange" type="checkbox" checked />
+            Must change password on first login
+          </label>
+        </div>
+      </div>
+      <div class="card-footer">
+        <button id="copyLogin" class="btn btn-secondary">Copy Login Details</button>
+      </div>
+    </section>
+
+    <!-- NOTES -->
+    <section class="card mt-16">
+      <div class="card-header">Notes</div>
+      <div class="card-body">
+        <textarea id="notes" rows="4" placeholder="Optional notes…"></textarea>
+      </div>
+    </section>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- USER MENU HANDLER -->
+  <script type="module">
+    import { getUser, api, toast } from "./js/nkd-bus.js";
+
+    const u = getUser();
+    const slot = document.querySelector("[data-user-slot]");
+    if (slot) slot.textContent = `${u?.name || "Offline Admin"} • ${u?.role || "admin"}`;
+    const btn = document.querySelector(".menu-toggle");
+    const nav = document.getElementById("adminNav");
+    if (btn && nav) btn.addEventListener("click", () => nav.classList.toggle("active"));
+
+    const $ = (id) => document.getElementById(id);
+
+    // Auto-generate password
+    $("#genPass").addEventListener("click", () => {
+      const id = ($("#memberId").value || "NKD000").replace(/\s+/g, "");
+      const y = new Date().getFullYear();
+      $("#tempPassword").value = `${id}-${y}`;
+    });
+
+    // Copy login details
+    $("#copyLogin").addEventListener("click", () => {
+      const user = ($("#username").value || $("#email").value || $("#memberId").value || "").trim();
+      const pass = $("#tempPassword").value.trim();
+      const msg = `Login details:\n\nUsername: ${user}\nPassword: ${pass}\nPortal: ${location.origin}/Frontend/login.html`;
+      navigator.clipboard.writeText(msg);
+      alert("Login details copied to clipboard!");
+    });
+
+    // Save Member
+    $("#saveMember").addEventListener("click", async () => {
+      const payload = {
+        name: $("#fullName").value.trim(),
+        email: $("#email").value.trim(),
+        phone: $("#phone").value.trim(),
+        country: $("#country").value.trim(),
+        position: $("#position").value.trim(),
+        contactMethod: $("#contactMethod").value,
+        memberId: $("#memberId").value.trim(),
+        status: $("#status").value,
+        contributionPlan: $("#plan").value,
+        memberSince: $("#joined").value,
+        role: $("#role").value,
+        username: $("#username").value.trim() || $("#email").value.trim(),
+        password: $("#tempPassword").value.trim(),
+        mustChangePassword: $("#mustChange").checked,
+        notes: $("#notes").value.trim(),
+      };
+
+      if (!payload.name || !payload.memberId) {
+        alert("Please fill all required fields");
+        return;
+      }
+
+      try {
+        await api.post("/members", payload);
+        toast("Member saved successfully", "success");
+        window.location.href = "admin-members.html";
+      } catch (err) {
+        console.error(err);
+        alert("Error saving member.");
+      }
+    });
+  </script>
+</body>
+</html>

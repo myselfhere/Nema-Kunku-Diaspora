@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contribution History | Nema Kunku Diaspora</title>
+  <link rel="icon" type="image/png" href="Nema Kunku Diaspora Logo.png"/>
+  <link rel="stylesheet" href="admin-style.css"/>
+</head>
+<body>
+  <!-- Topbar -->
+  <header class="admin-topbar">
+    <div class="container">
+      <div class="brand">
+        <img src="Nema Kunku Diaspora Logo.png" alt="NKD" />
+        <span>Admin</span>
+      </div>
+      <nav class="topnav" aria-label="Admin navigation">
+        <a href="admin-dashboard.html">Dashboard</a>
+        <a href="admin-members.html">Members</a>
+        <a class="active" href="admin-contributions.html">Contributions</a>
+        <a href="expenditures.html">Expenditures</a>
+        <a href="view-meetings.html">Meetings</a>
+        <a href="admin-projects.html">Projects</a>
+        <a href="login.html" id="logoutLink">Logout</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <h1 class="page-title">Contribution History</h1>
+
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title" id="memberTitle">Member:</h2>
+        <div class="toolbar">
+          <button id="exportCsvBtn" class="btn btn--outline">Export CSV</button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date (dd-mm-yyyy)</th>
+                <th>Member</th>
+                <th>Receipt #</th>
+                <th class="num">Amount (EUR)</th>
+                <th class="num">Amount (GMD)</th>
+                <th>Plan</th>
+                <th>Payment Method</th>
+                <th>Confirmed By</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="contributionTableBody">
+              <tr><td colspan="9">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <footer class="admin-footer">
+      © 2025 Nema Kunku Diaspora. All rights reserved.
+    </footer>
+  </main>
+
+  <!-- Scripts -->
+  <script type="module" src="js/nkd-bus.js"></script>
+  <script type="module" src="js/view-contributions.js"></script>
+</body>
+</html>

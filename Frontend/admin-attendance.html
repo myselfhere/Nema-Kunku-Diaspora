@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Attendance — Admin</title>
+  <link rel="stylesheet" href="admin-style.css"/>
+</head>
+<body>
+  <!-- Top Nav -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" id="menuToggle">☰</button>
+      <nav class="admin-nav" id="adminNav">
+        <a href="admin-dashboard.html">Dashboard</a>
+        <a href="admin-members.html">Members</a>
+        <a href="admin-contributions.html">Contributions</a>
+        <a href="admin-expenditures.html">Expenditures</a>
+        <a href="admin-projects.html">Projects</a>
+        <a href="admin-meetings.html">Meetings</a>
+        <a class="active" href="admin-attendance.html">Attendance</a>
+      </nav>
+      <div class="admin-user">
+        <span>Salme Ture • <strong>admin</strong></span>
+        <a href="#">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <h1 class="page-title">Attendance</h1>
+
+    <!-- KPIs -->
+    <div class="container">
+      <section class="cards cards-4">
+        <div class="card kpi-card">
+          <div class="card-title">Meetings (range)</div>
+          <div class="kpi" id="k_meetings">0</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="card-title">Present</div>
+          <div class="kpi" id="k_present">0</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="card-title">Absent</div>
+          <div class="kpi" id="k_absent">0</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="card-title">Attendance Rate</div>
+          <div class="kpi" id="k_rate">0%</div>
+        </div>
+      </section>
+
+      <!-- Find & Filter -->
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Find & Filter</h3>
+        </div>
+        <div class="grid-2">
+          <label>Search
+            <input id="q" type="text" placeholder="Member name / ID / meeting ID / country…">
+          </label>
+          <label>Meeting Type
+            <select id="fType">
+              <option value="">All types</option>
+              <option>General Meeting</option>
+              <option>Emergency Meeting</option>
+              <option>Executive</option>
+            </select>
+          </label>
+          <label>From
+            <input id="fFrom" type="date">
+          </label>
+          <label>To
+            <input id="fTo" type="date">
+          </label>
+          <label>Status
+            <select id="fStatus">
+              <option value="">All</option>
+              <option value="present">Present</option>
+              <option value="absent">Absent</option>
+            </select>
+          </label>
+        </div>
+        <div class="row gap end mt">
+          <button class="btn light" id="btnReset">Reset</button>
+          <button class="btn" id="btnExport">Export CSV</button>
+        </div>
+      </section>
+
+      <!-- Attendance Sheet -->
+      <section class="panel">
+        <div class="panel-head between">
+          <h3>Attendance Sheet</h3>
+          <a class="btn light" href="admin-meeting-add.html">Add Meeting</a>
+        </div>
+
+        <div class="row gap">
+          <select id="meetingSelect" class="grow">
+            <option value="">Select meeting…</option>
+          </select>
+        </div>
+
+        <div class="row gap mt">
+          <button id="btnAllPresent" class="btn">Mark All Present</button>
+          <button id="btnClear" class="btn light">Clear All</button>
+          <div class="grow"></div>
+          <button id="btnSaveStay" class="btn">Save & Stay</button>
+          <button id="btnSave" class="btn btn-secondary">Save Attendance</button>
+        </div>
+
+        <div class="table-wrap mt tall">
+          <table class="table" id="sheetTable">
+            <thead>
+              <tr>
+                <th>#</th><th>Member ID</th><th>Name</th><th>Country</th>
+                <th>Present</th><th>Reason (if absent)</th><th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="sheetBody">
+              <tr><td colspan="7">Select a meeting…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Records -->
+      <section class="panel">
+        <h3>Attendance Records</h3>
+        <div class="table-wrap">
+          <table class="table" id="recordsTable">
+            <thead>
+              <tr>
+                <th>Date</th><th>Meeting ID</th><th>Type</th>
+                <th>Member</th><th>Member ID</th><th>Country</th>
+                <th>Present</th><th>Reason</th><th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="recordsBody">
+              <tr><td colspan="9">No records.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- Member History Drawer -->
+    <aside id="historyDrawer" class="drawer">
+      <div class="drawer-inner">
+        <button class="drawer-close" id="closeHistory">×</button>
+        <h3 id="histTitle">Member History</h3>
+        <div class="cards cards-3">
+          <div class="card kpi-card"><div class="card-title">Present</div><div class="kpi" id="h_present">0</div></div>
+          <div class="card kpi-card"><div class="card-title">Absent</div><div class="kpi" id="h_absent">0</div></div>
+          <div class="card kpi-card"><div class="card-title">Rate</div><div class="kpi" id="h_rate">0%</div></div>
+        </div>
+        <div class="table-wrap mt">
+          <table class="table">
+            <thead><tr><th>Date</th><th>Meeting</th><th>Type</th><th>Present</th><th>Reason</th><th>Notes</th></tr></thead>
+            <tbody id="histBody"><tr><td colspan="6">No history.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <script type="module" src="./js/attendance.js"></script>
+  <script>
+    // Mobile menu
+    document.getElementById('menuToggle')?.addEventListener('click', () => {
+      document.getElementById('adminNav')?.classList.toggle('active');
+    });
+  </script>
+</body>
+</html>

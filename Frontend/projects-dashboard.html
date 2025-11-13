@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project Manager Dashboard</title>
+  <link rel="stylesheet" href="admin-style.css" />
+  <style>
+    /* tiny layout helpers specific to this page */
+    .grid-actions { display:grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap:12px; }
+    @media (max-width: 920px){ .grid-actions { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px){ .grid-actions { grid-template-columns: 1fr; } }
+
+    .kpi-grid { display:grid; gap:16px; grid-template-columns: repeat(4, 1fr); }
+    @media (max-width: 1100px){ .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px){ .kpi-grid { grid-template-columns: 1fr; } }
+
+    .two-col-panels { display:grid; gap:16px; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 900px){ .two-col-panels { grid-template-columns: 1fr; } }
+
+    .table-mini td.nowrap, .nowrap { white-space:nowrap; }
+  </style>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+
+      <nav class="admin-nav" id="adminNav">
+        <a href="admin-dashboard.html" data-key="dashboard">Dashboard</a>
+        <a href="admin-members.html" data-key="members">Members</a>
+        <a href="admin-contributions.html" data-key="contributions">Contributions</a>
+        <a href="admin-expenditures.html" data-key="expenditures">Expenditures</a>
+        <a href="projects-dashboard.html" data-key="projects">Projects</a>
+        <a href="admin-meetings.html" data-key="meetings">Meetings</a>
+        <a href="admin-settings.html" data-key="settings">Settings</a>
+      </nav>
+
+      <div class="admin-user">
+        <span id="whoami">Signed in</span>
+        <a href="login.html">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <h1 class="page-title">Project Manager Dashboard</h1>
+    <p class="muted">Create projects, manage milestones, and view all records & reports.</p>
+
+    <!-- Quick Actions -->
+    <section class="card">
+      <div class="card-header">Quick Actions</div>
+      <div class="card-body grid-actions">
+        <a id="btnAdd" class="btn btn-primary" href="admin-project-add.html">Add New Project</a>
+        <a class="btn btn-secondary" href="admin-project-records.html">View Project Records</a>
+        <a id="btnMilestone" class="btn btn-secondary" href="admin-project-milestones.html">Log Milestone</a>
+        <a id="btnReport" class="btn btn-secondary" href="admin-project-report.html">Generate Project Report</a>
+      </div>
+    </section>
+
+    <!-- KPIs -->
+    <section class="kpi-grid" style="margin-top:16px;">
+      <div class="card">
+        <div class="card-header">Active Projects</div>
+        <div class="card-body">
+          <div class="stat-big" id="kpiActive">0</div>
+          <div class="muted">Currently in progress</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Completed</div>
+        <div class="card-body">
+          <div class="stat-big" id="kpiCompleted">0</div>
+          <div class="muted">All-time finished</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Total Budget</div>
+        <div class="card-body">
+          <div class="stat-big"><span id="kpiBudgetEUR">€0.00</span> / <span id="kpiBudgetGMD">D0.00</span></div>
+          <div class="muted">Across all active projects</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Spent</div>
+        <div class="card-body">
+          <div class="stat-big"><span id="kpiSpentEUR">€0.00</span> / <span id="kpiSpentGMD">D0.00</span></div>
+          <div class="muted">Recorded expenditures</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent & Upcoming -->
+    <section class="two-col-panels" style="margin-top:16px;">
+      <div class="card">
+        <div class="card-header">Recent Projects (Last 8)</div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table class="table-mini" id="recentProjectsTbl">
+              <thead>
+                <tr>
+                  <th>ID</th><th>Name</th><th>Status</th><th>Start</th><th>End</th><th>Budget</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <p class="muted" id="recentEmpty" style="display:none;">No projects yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Upcoming Milestones</div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table class="table-mini" id="milestonesTbl">
+              <thead>
+                <tr>
+                  <th>Project</th><th>Milestone</th><th>Due</th><th>Owner</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <p class="muted" id="msEmpty" style="display:none;">No upcoming milestones.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Compact Records / History (dashboard-friendly) -->
+    <section class="card" style="margin-top:16px;">
+      <div class="card-header">Project Records / History</div>
+      <div class="card-body">
+        <div class="form-group">
+          <input id="quickSearch" placeholder="Search by name, ID, or responsible..." />
+        </div>
+        <div class="form-group two-col">
+          <select id="quickStatus">
+            <option value="">All statuses</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
+          </select>
+          <select id="quickPerson">
+            <option value="">All responsible persons</option>
+          </select>
+        </div>
+        <div class="two-col" style="margin-top:8px;">
+          <a href="admin-project-add.html" id="quickAdd" class="btn btn-primary">Add Project</a>
+          <a href="admin-project-records.html" class="btn btn-secondary">Open Full Records</a>
+        </div>
+
+        <div class="table-wrap" style="margin-top:12px;">
+          <table class="table-mini" id="quickTbl">
+            <thead>
+              <tr>
+                <th>Project ID</th><th>Name</th><th>Status</th><th>Budget (GMD)</th><th>Expenditure (GMD)</th><th>Start</th><th>End</th><th>Responsible</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <p class="muted" id="quickEmpty" style="display:none;">No matching projects.</p>
+        </div>
+
+        <div class="pager" style="margin-top:8px;">
+          <button class="btn btn-light" id="qPrev">Prev</button>
+          <span id="qInfo" class="muted">Page 1 / 1</span>
+          <button class="btn btn-light" id="qNext">Next</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- NAV + ROLE GATES -->
+  <script>
+    (function () {
+      const btn=document.querySelector('.menu-toggle'), nav=document.getElementById('adminNav');
+      if(btn&&nav) btn.addEventListener('click',()=>nav.classList.toggle('active'));
+      const map={'admin-dashboard.html':'dashboard','admin-members.html':'members','admin-contributions.html':'contributions','admin-expenditures.html':'expenditures','projects-dashboard.html':'projects','admin-meetings.html':'meetings','admin-settings.html':'settings'};
+      const key=map[(location.pathname.split('/').pop()||'').toLowerCase()];
+      if(key) document.querySelectorAll('.admin-nav a[data-key]').forEach(a=>a.dataset.key===key&&a.classList.add('active'));
+    })();
+  </script>
+
+  <!-- PAGE LOGIC -->
+  <script type="module">
+    import { api, getUser } from "./js/nkd-bus.js";
+
+    // --- role helpers ---
+    const user = getUser() || {};
+    document.getElementById('whoami').textContent = `${user?.name||'User'} • ${user?.role||'staff'}`;
+    const can = (roles) => roles.includes(user?.role);
+    const gate = (sel, roles) => { const el=document.querySelector(sel); if(el && !can(roles)) el.style.display='none'; };
+
+    // buttons visibility
+    gate('#btnAdd', ['admin','project-manager']);
+    gate('#btnMilestone', ['admin','project-manager']);
+    gate('#quickAdd', ['admin','project-manager']);
+    // report allowed to admin / project-manager / secretary — no gate (everyone else sees link too if desired)
+    if(!can(['admin','project-manager','secretary'])) document.querySelector('#btnReport')?.classList.add('btn-disabled');
+
+    // --- utils ---
+    const fmt = n => (Number(n||0)).toLocaleString();
+    const money = (v, cur) => (cur==='EUR' ? `€${Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`
+                                           : `D${Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`);
+    const dstr = v => v ? new Date(v).toISOString().slice(0,10) : '';
+
+    // --- load data ---
+    let all = [];
+    try {
+      const res = await api.get('/api/projects');
+      all = res?.data || res || [];
+    } catch(e) {
+      console.warn('Failed to load projects', e);
+      all = [];
+    }
+
+    // KPIs
+    const active = all.filter(p=>p.status==='ongoing');
+    const completed = all.filter(p=>p.status==='completed');
+    const sum = (arr, k) => arr.reduce((a,b)=>a+Number(b?.[k]||0),0);
+
+    document.getElementById('kpiActive').textContent = active.length;
+    document.getElementById('kpiCompleted').textContent = completed.length;
+
+    // if you store both EUR and GMD on each project:
+    const budgetEUR = sum(active,'budgetEUR');
+    const budgetGMD = sum(active,'budgetGMD');
+    const spentEUR  = sum(active,'expenditureEUR');
+    const spentGMD  = sum(active,'expenditureGMD');
+
+    document.getElementById('kpiBudgetEUR').textContent = money(budgetEUR,'EUR');
+    document.getElementById('kpiBudgetGMD').textContent = money(budgetGMD,'GMD');
+    document.getElementById('kpiSpentEUR').textContent  = money(spentEUR,'EUR');
+    document.getElementById('kpiSpentGMD').textContent  = money(spentGMD,'GMD');
+
+    // Recent projects (last 8 by start/end date)
+    const recent = [...all].sort((a,b)=> new Date(b.startDate||b.createdAt||0)-new Date(a.startDate||a.createdAt||0)).slice(0,8);
+    const rtbody = document.querySelector('#recentProjectsTbl tbody');
+    if(recent.length===0){ document.getElementById('recentEmpty').style.display='block'; }
+    rtbody.innerHTML = recent.map(p=>`
+      <tr>
+        <td>${p.projectId||''}</td>
+        <td>${p.projectName||''}</td>
+        <td><span class="badge">${p.status||''}</span></td>
+        <td>${dstr(p.startDate)}</td>
+        <td>${dstr(p.endDate)}</td>
+        <td>D${fmt(p.budgetGMD||0)}</td>
+      </tr>
+    `).join('');
+
+    // Upcoming milestones (if you have an endpoint; otherwise derive from p.milestones)
+    let milestones = [];
+    try {
+      const mres = await api.get('/api/milestones?upcoming=true&limit=8');
+      milestones = mres?.data || mres || [];
+    } catch {
+      // fallback: collect within projects (if p.milestones exists)
+      milestones = all.flatMap(p => (p.milestones||[]).map(m => ({...m, projectName:p.projectName})))
+                      .filter(m => m?.dueDate && new Date(m.dueDate) >= new Date())
+                      .sort((a,b)=> new Date(a.dueDate)-new Date(b.dueDate))
+                      .slice(0,8);
+    }
+    const mbody = document.querySelector('#milestonesTbl tbody');
+    if(milestones.length===0){ document.getElementById('msEmpty').style.display='block'; }
+    mbody.innerHTML = milestones.map(m=>`
+      <tr>
+        <td>${m.projectName||m.projectId||''}</td>
+        <td>${m.title||m.name||''}</td>
+        <td>${dstr(m.dueDate)}</td>
+        <td>${m.owner||m.responsible||''}</td>
+        <td><span class="badge">${m.status||'open'}</span></td>
+      </tr>
+    `).join('');
+
+    // --- Quick records table (lightweight, paginated locally) ---
+    const qSearch = document.getElementById('quickSearch');
+    const qStatus = document.getElementById('quickStatus');
+    const qPerson = document.getElementById('quickPerson');
+    const qBody   = document.querySelector('#quickTbl tbody');
+    const qEmpty  = document.getElementById('quickEmpty');
+    const owners  = Array.from(new Set(all.map(p=>p.responsiblePerson).filter(Boolean))).sort();
+    qPerson.innerHTML = `<option value="">All responsible persons</option>` + owners.map(o=>`<option>${o}</option>`).join('');
+
+    let qPage=1, PAGE=10, qFiltered=[];
+    function applyQuick(){
+      const q = (qSearch.value||'').toLowerCase();
+      const st = qStatus.value;
+      const pe = qPerson.value;
+      qFiltered = all.filter(p=>{
+        const T = `${p.projectName||''} ${p.projectId||''} ${p.responsiblePerson||''}`.toLowerCase();
+        return (!q || T.includes(q)) && (!st || p.status===st) && (!pe || p.responsiblePerson===pe);
+      });
+      qPage=1; renderQuick();
+    }
+    function renderQuick(){
+      const total = Math.max(1, Math.ceil(qFiltered.length/PAGE));
+      document.getElementById('qInfo').textContent = `Page ${qPage} / ${total}`;
+      document.getElementById('qPrev').disabled = qPage<=1;
+      document.getElementById('qNext').disabled = qPage>=total;
+
+      const slice = qFiltered.slice((qPage-1)*PAGE, (qPage-1)*PAGE + PAGE);
+      if(slice.length===0){ qEmpty.style.display='block'; qBody.innerHTML=''; return; }
+      qEmpty.style.display='none';
+      qBody.innerHTML = slice.map(p=>`
+        <tr>
+          <td>${p.projectId||''}</td>
+          <td>${p.projectName||''}</td>
+          <td><span class="badge">${p.status||''}</span></td>
+          <td>D${fmt(p.budgetGMD||0)}</td>
+          <td>D${fmt(p.expenditureGMD||0)}</td>
+          <td>${dstr(p.startDate)}</td>
+          <td>${dstr(p.endDate)}</td>
+          <td>${p.responsiblePerson||''}</td>
+        </tr>
+      `).join('');
+    }
+    qSearch.addEventListener('input', applyQuick);
+    qStatus.addEventListener('change', applyQuick);
+    qPerson.addEventListener('change', applyQuick);
+    document.getElementById('qPrev').addEventListener('click', ()=>{ qPage--; renderQuick(); });
+    document.getElementById('qNext').addEventListener('click', ()=>{ qPage++; renderQuick(); });
+    applyQuick();
+  </script>
+</body>
+</html>

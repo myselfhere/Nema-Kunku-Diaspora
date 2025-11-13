@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Member Expenditures | Nema Kunku Diaspora</title>
+  <link rel="stylesheet" href="admin-style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <ul class="nav-menu">
+      <li><a href="admin-dashboard.html">Dashboard</a></li>
+      <li><a href="members.html">Members</a></li>
+      <li><a href="projects.html">Projects</a></li>
+      <li><a href="meetings.html">Meetings</a></li>
+      <li><a href="#" onclick="logout()">Logout</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    <h1>Member Expenditure History</h1>
+    <section>
+      <table>
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Date</th>
+            <th>Payee</th>
+            <th>Description</th>
+            <th>GMD</th>
+            <th>EUR</th>
+            <th>Category</th>
+            <th>Method</th>
+            <th>Paid By</th>
+            <th>Comments</th>
+          </tr>
+        </thead>
+        <tbody id="expenditureTableBody">
+          <tr><td colspan="10">Loading...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2025 Nema Kunku Diaspora. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const token = localStorage.getItem("nkd_token");
+    const urlParams = new URLSearchParams(window.location.search);
+    const memberId = urlParams.get("memberId");
+
+    if (!token) {
+      alert("Please log in.");
+      window.location.href = "login.html";
+    }
+
+    function logout() {
+      localStorage.removeItem("nkd_token");
+      window.location.href = "login.html";
+    }
+
+    async function loadExpenditures() {
+      const res = await fetch(`https://nema-kunku-diaspora.onrender.com/api/expenditures/member/${memberId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+      const tableBody = document.getElementById("expenditureTableBody");
+      tableBody.innerHTML = "";
+
+      if (data.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="10">No expenditures found.</td></tr>';
+        return;
+      }
+
+      data.forEach(e => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${e.reference}</td>
+          <td>${new Date(e.date).toLocaleDateString()}</td>
+          <td>${e.payee}</td>
+          <td>${e.description}</td>
+          <td>${e.amountGMD}</td>
+          <td>${e.amountEUR || "—"}</td>
+          <td>${e.category}</td>
+          <td>${e.paymentMethod}</td>
+          <td>${e.paidBy}</td>
+          <td>${e.comments || "—"}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    loadExpenditures();
+  </script>
+</body>
+</html>

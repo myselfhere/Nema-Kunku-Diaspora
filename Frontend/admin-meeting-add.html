@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Add Meeting — Admin</title>
+  <link rel="stylesheet" href="admin-style.css"/>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+      <nav class="admin-nav" id="adminNav">
+        <a href="admin-dashboard.html" data-key="dashboard">Dashboard</a>
+        <a href="admin-members.html" data-key="members">Members</a>
+        <a href="admin-contributions.html" data-key="contributions">Contributions</a>
+        <a href="admin-expenditures.html" data-key="expenditures">Expenditures</a>
+        <a href="admin-projects.html" data-key="projects">Projects</a>
+        <a href="admin-meetings.html" data-key="meetings">Meetings</a>
+        <a href="admin-settings.html" data-key="settings">Settings</a>
+      </nav>
+      <div class="admin-user">
+        <span>Salme Ture • <strong>admin</strong></span>
+        <a href="login.html">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <div class="container">
+      <h1 class="page-title">Add Meeting</h1>
+
+      <div class="content-grid">
+        <!-- LEFT: FORM -->
+        <section class="card">
+          <div class="card-header">Meeting Details</div>
+          <div class="card-body">
+
+            <div class="form-group two-col">
+              <div>
+                <label>Meeting Type <span class="required">required</span></label>
+                <select id="mType">
+                  <option value="">Select type…</option>
+                  <option value="GM">General Meeting</option>
+                  <option value="SM">Emergency / Special Meeting</option>
+                  <option value="AM">Annual Meeting</option>
+                </select>
+              </div>
+              <div>
+                <label>Meeting ID</label>
+                <input id="mId" value="GM-YYYYMMDD-01" readonly/>
+                <p class="form-hint">Auto format: <strong>&lt;PREFIX&gt;-YYYYMMDD-##</strong> (GM / SM / AM).</p>
+              </div>
+            </div>
+
+            <div class="form-group two-col">
+              <div>
+                <label>Date <span class="required">required</span></label>
+                <input id="mDate" type="date"/>
+              </div>
+              <div>
+                <label>Time (local)</label>
+                <input id="mTime" type="time"/>
+              </div>
+            </div>
+
+            <div class="form-group two-col">
+              <div>
+                <label>Mode <span class="required">required</span></label>
+                <select id="mMode">
+                  <option value="">Select…</option>
+                  <option>In-Person</option>
+                  <option>Online</option>
+                  <option>Hybrid</option>
+                </select>
+              </div>
+              <div>
+                <label>Location / Link</label>
+                <input id="mLocation" placeholder="e.g., Essau Mini Stadium or Zoom link"/>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Agenda Items <span class="required">add one or more</span></label>
+              <div class="row gap" style="margin-bottom:8px;flex-wrap:wrap">
+                <input id="agTitle" placeholder="Agenda title (topic) — e.g., 2025 Contributions deadline" style="flex:1"/>
+                <input id="agOwner" placeholder="Presenter / Owner (optional)" style="width:260px"/>
+                <input id="agTime" type="number" min="0" step="5" placeholder="mins" style="width:120px"/>
+                <button id="addAgenda" type="button" class="btn btn-secondary">Add</button>
+              </div>
+
+              <div class="table-wrap tall">
+                <table class="table" id="agendaTable">
+                  <thead>
+                    <tr>
+                      <th>#</th><th>Title</th><th>Presenter</th><th>Time (mins)</th><th>Notes</th><th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="agendaBody">
+                    <tr><td colspan="6" class="muted">No agenda yet. Add items above.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="form-hint">Tip: add multiple topics (1, 2, 3, 4…) as needed.</p>
+            </div>
+
+            <div class="form-group">
+              <label>General Notes</label>
+              <textarea id="mNotes" rows="4" placeholder="Any pre-meeting notes, objectives, or documents to bring…"></textarea>
+            </div>
+
+            <div class="two-col">
+              <button id="saveMeeting" type="button" class="btn btn-primary">Save Meeting</button>
+              <button id="saveAdd"   type="button" class="btn btn-secondary">Save & Add Another</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT: INFO -->
+        <aside class="card info-panel">
+          <div class="card-header">Info</div>
+          <div class="card-body">
+            <ul>
+              <li><strong>ID Prefix:</strong> General = <b>GM</b>, Emergency/Special = <b>SM</b>, Annual = <b>AM</b>.</li>
+              <li><strong>ID Format:</strong> <code>PREFIX-YYYYMMDD-##</code>. Example: <b>GM-20251109-01</b>.</li>
+              <li>Sequence <b>##</b> increments per day & type (backend confirms the next number).</li>
+              <li>Agenda accepts unlimited items; each can have owner, time, and notes.</li>
+              <li>After saving, attendance will be marked from the Attendance page.</li>
+            </ul>
+            <hr style="border:none;border-top:1px solid var(--line);margin:12px 0;">
+            <div class="row" style="gap:10px;flex-wrap:wrap">
+              <a class="btn btn-secondary" href="admin-meetings.html">Back to Meetings</a>
+              <a class="btn btn-secondary" href="admin-dashboard.html">Dashboard</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Recent list -->
+      <section class="card" style="margin:18px 0;">
+        <div class="card-header">Recent Meetings</div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th><th>Type</th><th>Date</th><th>Time</th><th>Mode</th><th>Location / Link</th><th>Agenda</th>
+                </tr>
+              </thead>
+              <tbody id="recentMeetings">
+                <tr><td colspan="7" class="muted">No meetings yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- NAV highlight + mobile menu -->
+  <script>
+    (function () {
+      const btn=document.querySelector('.menu-toggle'), nav=document.getElementById('adminNav');
+      if(btn&&nav) btn.addEventListener('click',()=>nav.classList.toggle('active'));
+      document.querySelectorAll('.admin-nav a[data-key]').forEach(a=>{
+        if(a.dataset.key==='meetings') a.classList.add('active');
+      });
+    })();
+  </script>
+
+  <!-- PAGE LOGIC -->
+  <script type="module">
+    import { api } from './js/nkd-bus.js';
+
+    const $ = s => document.querySelector(s);
+    const agenda = [];
+
+    function ymd(d){
+      try{
+        const x = new Date(d);
+        const p = n => String(n).padStart(2,'0');
+        return `${x.getFullYear()}${p(x.getMonth()+1)}${p(x.getDate())}`;
+      }catch{ return 'YYYYMMDD'; }
+    }
+
+    async function updateMeetingId(){
+      const type = $('#mType').value || 'GM';
+      const date = $('#mDate').value;
+      const day = date ? ymd(date) : 'YYYYMMDD';
+
+      // Try backend for next sequence; fall back to 01
+      let seq = '01';
+      if(type && date){
+        try{
+          // backend expected to return { next: "03" } or full id; we handle both
+          const res = await api.get(`/meetings/next-id?type=${type}&date=${date}`);
+          if(res?.next) seq = String(res.next).padStart(2,'0');
+          else if(res?.id && typeof res.id === 'string'){
+            $('#mId').value = res.id; return;
+          }
+        }catch(e){ /* fallback below */ }
+      }
+      $('#mId').value = `${type}-${day}-${seq}`;
+    }
+
+    // Agenda rendering
+    function renderAgenda(){
+      const body = $('#agendaBody');
+      if(!agenda.length){
+        body.innerHTML = `<tr><td colspan="6" class="muted">No agenda yet. Add items above.</td></tr>`;
+        return;
+      }
+      body.innerHTML = agenda.map((it,i)=>`
+        <tr>
+          <td>${i+1}</td>
+          <td><div>${it.title||''}</div></td>
+          <td>${it.owner||''}</td>
+          <td>${it.time||''}</td>
+          <td>${it.notes||''}</td>
+          <td><span class="link" data-del="${i}">Remove</span></td>
+        </tr>
+      `).join('');
+      body.querySelectorAll('[data-del]').forEach(a=>{
+        a.onclick = () => { agenda.splice(+a.dataset.del,1); renderAgenda(); };
+      });
+    }
+
+    // Add agenda from inputs (notes via prompt for speed)
+    $('#addAgenda').addEventListener('click', ()=>{
+      const title = ($('#agTitle').value||'').trim();
+      if(!title){ alert('Add an agenda title.'); return; }
+      const owner = ($('#agOwner').value||'').trim();
+      const time  = ($('#agTime').value||'').trim();
+      const notes = prompt('Notes for this agenda item (optional):','') || '';
+      agenda.push({ title, owner, time, notes });
+      $('#agTitle').value = ''; $('#agOwner').value=''; $('#agTime').value='';
+      renderAgenda();
+    });
+
+    // Save
+    async function save(reset=false){
+      const type = $('#mType').value;
+      const date = $('#mDate').value;
+      if(!type || !date){ alert('Please select Meeting Type and Date.'); return; }
+
+      const payload = {
+        meetingId: $('#mId').value,
+        type,
+        date,
+        time: $('#mTime').value || null,
+        mode: $('#mMode').value || null,
+        location: $('#mLocation').value || null,
+        notes: $('#mNotes').value || '',
+        agenda
+      };
+
+      try{
+        await api.post('/meetings', payload);
+        alert('Meeting saved.');
+        if(reset){ location.reload(); }
+        else { fetchRecent(); }
+      }catch(e){
+        alert('Save failed.');
+        console.warn(e);
+      }
+    }
+
+    $('#saveMeeting').onclick = ()=> save(false);
+    $('#saveAdd').onclick    = ()=> save(true);
+
+    // Reactivity
+    $('#mType').addEventListener('change', updateMeetingId);
+    $('#mDate').addEventListener('change', updateMeetingId);
+
+    // Recent
+    async function fetchRecent(){
+      try{
+        const res = await api.get('/meetings?limit=5'); // [{meetingId,type,date,time,mode,location,agenda:[...]}]
+        const rows = res?.data || res || [];
+        const tb = $('#recentMeetings');
+        if(!rows.length){ tb.innerHTML = `<tr><td colspan="7" class="muted">No meetings yet.</td></tr>`; return; }
+        tb.innerHTML = rows.map(m => `
+          <tr>
+            <td>${m.meetingId||''}</td>
+            <td>${m.type||''}</td>
+            <td>${m.date? new Date(m.date).toLocaleDateString():''}</td>
+            <td>${m.time||''}</td>
+            <td>${m.mode||''}</td>
+            <td>${m.location||''}</td>
+            <td>${(m.agenda||[]).length}</td>
+          </tr>
+        `).join('');
+      }catch(e){ console.warn(e); }
+    }
+
+    // Init
+    renderAgenda();
+    updateMeetingId();
+    fetchRecent();
+  </script>
+</body>
+</html>

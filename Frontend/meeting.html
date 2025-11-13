@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Meetings — Nema Kunku Diaspora</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="icon" type="image/png" href="Nema Kunku Diaspora Logo.png"/>
+</head>
+<body>
+  <!-- Nav -->
+  <nav class="navbar">
+    <ul class="nav-menu">
+      <li><a href="admin-dashboard.html">Dashboard</a></li>
+      <li><a href="admin-members.html">Members</a></li>
+      <li><a class="active" href="meeting.html">Meetings</a></li>
+      <li><a href="admin-contributions.html">Contributions</a></li>
+      <li><a href="expenditures.html">Expenditures</a></li>
+      <li><a href="login.html" id="logoutLink">Logout</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content" style="max-width:1100px;margin-inline:auto;">
+    <section class="hero" style="margin-bottom:10px;">
+      <h1>Meetings</h1>
+      <p class="lead">Create and manage <strong>General (GM)</strong> and <strong>Emergency/Special (SM)</strong> meetings. Dates show as <strong>DD-MM-YYYY</strong>. IDs: <code>GM-YYYYMMDD-##</code> or <code>SM-YYYYMMDD-##</code>.</p>
+    </section>
+
+    <!-- Create / Edit form -->
+    <section class="section" style="background:#fff;border:1px solid #dcefdc;border-radius:10px;padding:16px;">
+      <form id="meetingForm">
+        <input type="hidden" id="editId" />
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div>
+            <label for="meetingType"><strong>Type</strong></label>
+            <select id="meetingType" required style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+              <option value="GM">General Meeting (GM)</option>
+              <option value="SM">Emergency / Special (SM)</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="meetingDate"><strong>Date</strong></label>
+            <input id="meetingDate" type="date" required style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+            <small style="opacity:.8;">Saved and shown as DD-MM-YYYY</small>
+          </div>
+
+          <div>
+            <label for="meetingTitle"><strong>Title (optional)</strong></label>
+            <input id="meetingTitle" type="text" placeholder="e.g., Monthly GM" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label for="meetingNotes"><strong>Notes (optional)</strong></label>
+          <textarea id="meetingNotes" rows="3" placeholder="Agenda, location, notes…" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;"></textarea>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+          <button type="submit" class="cta-button" id="saveBtn">Save Meeting</button>
+          <button type="button" class="cta-button secondary" id="resetBtn">Clear</button>
+          <div id="formMsg" style="margin-left:auto;"></div>
+        </div>
+      </form>
+    </section>
+
+    <!-- Meetings Table -->
+    <section class="section" style="margin-top:16px;background:#fff;border:1px solid #dcefdc;border-radius:10px;padding:6px;">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:8px 10px;">
+        <input id="searchBox" type="text" placeholder="Search by ID, title, type…" style="flex:1;min-width:220px;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        <span class="badge" style="background:#f0fff0;border:1px solid #cfe9cf;border-radius:6px;padding:6px 10px;">
+          Total: <strong id="statTotal">0</strong>
+        </span>
+      </div>
+
+      <div class="table-wrap" style="overflow:auto;">
+        <table class="project-table" id="meetingsTable">
+          <thead>
+            <tr>
+              <th style="min-width:160px;">Meeting ID</th>
+              <th style="min-width:100px;">Type</th>
+              <th style="min-width:130px;">Date</th>
+              <th style="min-width:220px;">Title</th>
+              <th style="min-width:260px;">Notes</th>
+              <th style="min-width:220px;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="meetingsTbody">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+      <div id="listMsg" style="margin:10px;"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 Nema Kunku Diaspora. All rights reserved.</p>
+  </footer>
+
+  <script src="js/meetings.js"></script>
+</body>
+</html>

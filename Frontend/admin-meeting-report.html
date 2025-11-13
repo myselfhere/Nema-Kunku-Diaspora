@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meeting Reports — Secretary</title>
+  <link rel="stylesheet" href="admin-style.css" />
+  <style>
+    /* Small extras for this page */
+    .filters .form-group { margin-bottom: 10px; }
+    .kpis { display:grid; grid-template-columns: repeat(4, minmax(220px,1fr)); gap:14px; }
+    @media (max-width: 900px){ .kpis { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px){ .kpis { grid-template-columns: 1fr; } }
+    .badge.success{ background:#2e7d32; color:#fff; padding:2px 8px; border-radius:999px; font-size:.85rem;}
+    .badge.warn{ background:#b23b28; color:#fff; padding:2px 8px; border-radius:999px; font-size:.85rem;}
+    .muted-sm{ color:#7b8; font-size:.9rem; }
+  </style>
+</head>
+<body>
+  <!-- TOP BAR -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+
+      <nav class="admin-nav" id="adminNav">
+        <a href="admin-dashboard.html" data-key="dashboard">Dashboard</a>
+        <a href="admin-members.html" data-key="members">Members</a>
+        <a href="admin-contributions.html" data-key="contributions">Contributions</a>
+        <a href="admin-expenditures.html" data-key="expenditures">Expenditures</a>
+        <a href="admin-projects.html" data-key="projects">Projects</a>
+        <a href="admin-meetings.html" data-key="meetings">Meetings</a>
+        <a href="admin-settings.html" data-key="settings">Settings</a>
+      </nav>
+
+      <div class="admin-user">
+        <span>Salme Ture • <strong>Secretary</strong></span>
+        <a href="login.html">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <h1 class="page-title">Meeting Reports</h1>
+    <p class="muted">Generate official meeting attendance reports by meeting or date range. Export to CSV or print to PDF.</p>
+
+    <!-- QUICK LINKS -->
+    <section class="card">
+      <div class="card-header">Quick Actions</div>
+      <div class="card-body two-col">
+        <a class="btn btn-light" href="admin-secertary.html" onclick="history.back(); return false;">← Back</a>
+        <a class="btn btn-secondary" href="admin-secretary.html">Open Secretary Dashboard</a>
+      </div>
+    </section>
+
+    <!-- FILTERS -->
+    <section class="card" style="margin-top:16px;">
+      <div class="card-header">Filters</div>
+      <div class="card-body filters">
+        <div class="form-group two-col">
+          <div>
+            <label for="meetingSelect" class="label">Select Meeting</label>
+            <select id="meetingSelect">
+              <option value="">— Choose a meeting (ID • date • type) —</option>
+            </select>
+            <div class="muted-sm">Tip: Selecting a meeting ignores the date range below.</div>
+          </div>
+          <div>
+            <label class="label">Or choose a date range</label>
+            <div class="two-col">
+              <input id="dateFrom" type="date" />
+              <input id="dateTo" type="date" />
+            </div>
+            <div class="muted-sm">Use this if you want a report across multiple meetings.</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <button class="btn btn-primary" id="btnGenerate">Generate Report</button>
+          <div class="two-col">
+            <button class="btn btn-secondary" id="btnCsv" disabled>Export CSV</button>
+            <button class="btn btn-light" id="btnPdf" disabled>Print / Save PDF</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPIs -->
+    <section class="card" style="margin-top:16px;">
+      <div class="card-header">Summary</div>
+      <div class="card-body">
+        <div class="kpis">
+          <div class="card">
+            <div class="card-header">Total Registered</div>
+            <div class="card-body">
+              <div class="stat-big" id="kpiTotal">0</div>
+              <div class="muted">Members in scope</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Present</div>
+            <div class="card-body">
+              <div class="stat-big" id="kpiPresent">0</div>
+              <div class="muted">Marked present</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Absent</div>
+            <div class="card-body">
+              <div class="stat-big" id="kpiAbsent">0</div>
+              <div class="muted">Not present</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Attendance %</div>
+            <div class="card-body">
+              <div class="stat-big" id="kpiRate">0%</div>
+              <div class="muted">Present / Total</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CURRENT CONTEXT -->
+    <section class="card" style="margin-top:16px;">
+      <div class="card-header">Report Context</div>
+      <div class="card-body">
+        <div id="ctxText" class="muted">No report generated yet.</div>
+      </div>
+    </section>
+
+    <!-- TABLE -->
+    <section class="card" style="margin-top:16px;">
+      <div class="card-header">Attendance Details</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="table-mini" id="attendanceTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Member ID</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Type</th>
+                <th>Meeting ID</th>
+                <th>Date</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <p id="emptyMsg" class="muted" style="display:none;">No records to show.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- PAGE SCRIPT -->
+  <script type="module">
+    import { api } from "./js/nkd-bus.js";
+
+    // Nav active
+    (function () {
+      const btn=document.querySelector('.menu-toggle'), nav=document.getElementById('adminNav');
+      if(btn&&nav) btn.addEventListener('click',()=>nav.classList.toggle('active'));
+      document.querySelectorAll('.admin-nav a[data-key]').forEach(a=>{
+        if(a.dataset.key==='meetings') a.classList.add('active');
+      });
+    })();
+
+    const meetingSelect = document.getElementById('meetingSelect');
+    const dateFrom = document.getElementById('dateFrom');
+    const dateTo = document.getElementById('dateTo');
+    const btnGenerate = document.getElementById('btnGenerate');
+    const btnCsv = document.getElementById('btnCsv');
+    const btnPdf = document.getElementById('btnPdf');
+
+    const kpiTotal = document.getElementById('kpiTotal');
+    const kpiPresent = document.getElementById('kpiPresent');
+    const kpiAbsent = document.getElementById('kpiAbsent');
+    const kpiRate = document.getElementById('kpiRate');
+
+    const tbody = document.querySelector('#attendanceTable tbody');
+    const emptyMsg = document.getElementById('emptyMsg');
+    const ctxText = document.getElementById('ctxText');
+
+    let currentRows = [];
+
+    const fmtDate = (v) => {
+      if(!v) return '';
+      const d = new Date(v);
+      if(Number.isNaN(d.getTime())) return v;
+      return d.toISOString().split('T')[0];
+    };
+
+    async function loadMeetingsForSelect(){
+      try{
+        // Latest 60 meetings for dropdown
+        const res = await api.get('/api/meetings?limit=60&sort=-date');
+        const list = res?.data || res || [];
+        list.forEach(m=>{
+          const opt = document.createElement('option');
+          // Expect fields: meetingId, date, type, agenda/notes
+          opt.value = m.meetingId || m.id || m._id;
+          opt.textContent = `${m.meetingId || m._id} • ${fmtDate(m.date)} • ${m.type || 'General'}`;
+          meetingSelect.appendChild(opt);
+        });
+      }catch(e){
+        console.warn('Meeting select failed', e);
+      }
+    }
+
+    function paintKPIs(rows){
+      const total = rows.length;
+      const present = rows.filter(r => (r.status||'').toLowerCase()==='present').length;
+      const absent = total - present;
+      const rate = total ? Math.round((present/total)*100) : 0;
+      kpiTotal.textContent = total;
+      kpiPresent.textContent = present;
+      kpiAbsent.textContent = absent;
+      kpiRate.textContent = rate + '%';
+    }
+
+    function renderTable(rows){
+      currentRows = rows;
+      paintKPIs(rows);
+
+      if(rows.length===0){
+        emptyMsg.style.display = 'block';
+        tbody.innerHTML = '';
+        btnCsv.disabled = true;
+        btnPdf.disabled = true;
+        return;
+      }
+      emptyMsg.style.display = 'none';
+      btnCsv.disabled = false;
+      btnPdf.disabled = false;
+
+      tbody.innerHTML = rows.map((r,i)=>`
+        <tr>
+          <td>${i+1}</td>
+          <td>${r.memberId || ''}</td>
+          <td>${r.memberName || ''}</td>
+          <td>${(r.status||'').toLowerCase()==='present'
+                ? '<span class="badge success">Present</span>'
+                : '<span class="badge warn">Absent</span>'}</td>
+          <td>${r.meetingType || r.type || ''}</td>
+          <td>${r.meetingId || ''}</td>
+          <td>${fmtDate(r.date)}</td>
+          <td>${r.notes || ''}</td>
+        </tr>
+      `).join('');
+    }
+
+    function setContextText(kind, params){
+      if(kind==='meeting'){
+        ctxText.textContent = `Report for meeting ${params.meetingId} (${params.date || '—'})`;
+      }else{
+        ctxText.textContent = `Report for meetings between ${params.from || '—'} and ${params.to || '—'}`;
+      }
+    }
+
+    async function generateReport(){
+      try{
+        const selected = meetingSelect.value;
+        if(selected){
+          // Single-meeting report
+          const res = await api.get(`/api/meetings/${encodeURIComponent(selected)}`);
+          const m = res?.data || res || {};
+          // Expect: m.attendance = [{memberId, memberName, status, notes, date, meetingId, meetingType}]
+          const rows = (m.attendance || []).map(x=>({
+            ...x,
+            meetingId: m.meetingId || selected,
+            meetingType: m.type,
+            date: m.date
+          }));
+          setContextText('meeting', {meetingId: m.meetingId || selected, date: fmtDate(m.date)});
+          renderTable(rows);
+          return;
+        }
+
+        // Range report
+        const from = dateFrom.value;
+        const to = dateTo.value;
+        const query = [];
+        if(from) query.push(`from=${encodeURIComponent(from)}`);
+        if(to) query.push(`to=${encodeURIComponent(to)}`);
+        const res = await api.get('/api/attendance/range' + (query.length?`?${query.join('&')}`:''));
+        // Expect rows format compatible with renderTable
+        const rows = res?.data || res || [];
+        setContextText('range', {from, to});
+        renderTable(rows);
+      }catch(e){
+        console.warn('Generate report failed', e);
+        renderTable([]);
+        ctxText.textContent = 'Could not generate report. Please try again.';
+      }
+    }
+
+    function exportCSV(){
+      if(!currentRows.length) return;
+      const header = ['Member ID','Name','Status','Type','Meeting ID','Date','Notes'];
+      const body = currentRows.map(r=>[
+        r.memberId||'', r.memberName||'',
+        r.status||'', r.meetingType||r.type||'',
+        r.meetingId||'', fmtDate(r.date)||'', (r.notes||'').toString().replace(/\n/g,' ')
+      ]);
+      const csv = [header, ...body].map(row =>
+        row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')
+      ).join('\n');
+      const blob = new Blob([csv], {type:'text/csv'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'meeting-report.csv'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function printPDF(){
+      window.print(); // use browser print-to-PDF
+    }
+
+    // Bind
+    btnGenerate.addEventListener('click', generateReport);
+    btnCsv.addEventListener('click', exportCSV);
+    btnPdf.addEventListener('click', printPDF);
+
+    // Init
+    loadMeetingsForSelect();
+  </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Our Projects — Member</title>
+  <link rel="stylesheet" href="admin-style.css" />
+  <style>
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    @media (max-width:900px){.grid-3{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:640px){.grid-3{grid-template-columns:1fr}}
+    .sticky-header thead th{position:sticky;top:0;z-index:1;background:#f4faf4}
+    .mt-16{margin-top:16px}
+  </style>
+</head>
+<body>
+  <!-- Topbar -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+      <nav class="admin-nav" id="adminNav">
+        <a href="member-dashboard.html">Dashboard</a>
+        <a href="member-contributions.html">Contributions</a>
+        <a href="member-attendance.html">Attendance</a>
+        <a class="active" href="member-projects.html">Projects</a>
+        <a href="member-settings.html">Settings</a>
+      </nav>
+      <div class="admin-user">
+        <span data-user-slot>Member • member</span>
+        <a href="login.html">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <h1 class="page-title">My Projects</h1>
+
+    <!-- KPIs -->
+    <section class="grid-3">
+      <div class="card">
+        <div class="card-header">Total Projects</div>
+        <div class="card-body">
+          <div id="kpiTotal" class="stat-big">0</div>
+          <div class="muted">Linked or public</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Active</div>
+        <div class="card-body">
+          <div id="kpiActive" class="stat-big">0</div>
+          <div class="muted">Ongoing projects</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Completed</div>
+        <div class="card-body">
+          <div id="kpiCompleted" class="stat-big">0</div>
+          <div class="muted">Finished projects</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Table -->
+    <section class="card mt-16">
+      <div class="card-header">All Projects</div>
+      <div class="card-body">
+        <div class="table-wrap sticky-header">
+          <table class="table-mini">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Budget (GMD)</th>
+                <th>Expenditure (GMD)</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Responsible</th>
+              </tr>
+            </thead>
+            <tbody id="memberProjectsTbody">
+              <tr><td colspan="8" class="muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- user pill + mobile menu -->
+  <script type="module">
+    import { getUser } from "./js/nkd-bus.js";
+    const u = getUser();
+    const slot = document.querySelector("[data-user-slot]");
+    if (slot) slot.textContent = `${u?.name || "Member"} • ${u?.role || "member"}`;
+    const btn = document.querySelector(".menu-toggle");
+    const nav = document.getElementById("adminNav");
+    if (btn && nav) btn.addEventListener("click", () => nav.classList.toggle("active"));
+  </script>
+
+  <!-- Controller -->
+  <script type="module" src="./js/member-projects.js"></script>
+</body>
+</html>

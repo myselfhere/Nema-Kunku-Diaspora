@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Add Project — Admin</title>
+  <link rel="stylesheet" href="admin-style.css"/>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+      <nav class="admin-nav" id="adminNav">
+        <a href="admin-dashboard.html" data-key="dashboard">Dashboard</a>
+        <a href="admin-members.html" data-key="members">Members</a>
+        <a href="admin-contributions.html" data-key="contributions">Contributions</a>
+        <a href="admin-expenditures.html" data-key="expenditures">Expenditures</a>
+        <a href="admin-projects.html" data-key="projects">Projects</a>
+        <a href="admin-meetings.html" data-key="meetings">Meetings</a>
+        <a href="admin-settings.html" data-key="settings">Settings</a>
+      </nav>
+      <div class="admin-user">
+        <span>Salme Ture • <strong>admin</strong></span>
+        <a href="login.html">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-shell">
+    <div class="container">
+      <h1 class="page-title">Add Project</h1>
+
+      <div class="content-grid">
+        <!-- LEFT: FORM -->
+        <section class="card">
+          <div class="card-header">Project Details</div>
+          <div class="card-body">
+            <div class="form-group two-col">
+              <div>
+                <label>Project Name <span class="required">required</span></label>
+                <input id="pName" placeholder="e.g., Construction of the village bridge"/>
+              </div>
+              <div>
+                <label>Project ID</label>
+                <input id="pId" value="PRJ-0001" readonly/>
+                <p class="form-hint">Auto-generated (starts from PRJ-0001).</p>
+              </div>
+            </div>
+
+            <div class="form-group two-col">
+              <div>
+                <label>Start Date <span class="required">required</span></label>
+                <input id="pStart" type="date"/>
+              </div>
+              <div>
+                <label>End Date</label>
+                <input id="pEnd" type="date"/>
+              </div>
+            </div>
+
+            <div class="form-group two-col">
+              <div>
+                <label>Status <span class="required">required</span></label>
+                <select id="pStatus">
+                  <option value="">Select status…</option>
+                  <option>Planned</option>
+                  <option>In Progress</option>
+                  <option>On Hold</option>
+                  <option>Completed</option>
+                  <option>Cancelled</option>
+                </select>
+              </div>
+              <div>
+                <label>Responsible Person</label>
+                <input id="pManager" placeholder="e.g., Lamin Joof"/>
+              </div>
+            </div>
+
+            <div class="fx-box" id="fxBox">
+              <span id="fxLabel">€1 → D75</span>
+              <span class="form-hint">Used to convert Budget & Expenditure between EUR and GMD.</span>
+              <button type="button" id="fxEdit" class="edit">edit</button>
+            </div>
+
+            <div class="form-group two-col">
+              <div>
+                <label>Budget (EUR)</label>
+                <input id="pBudgetEUR" type="number" step="0.01" placeholder="0.00"/>
+                <div class="form-hint">Enter EUR or GMD — the other converts automatically.</div>
+              </div>
+              <div>
+                <label>Budget (GMD)</label>
+                <input id="pBudgetGMD" type="number" step="0.01" placeholder="0.00"/>
+              </div>
+            </div>
+
+            <div class="form-group two-col">
+              <div>
+                <label>Expenditure (EUR)</label>
+                <input id="pSpentEUR" type="number" step="0.01" placeholder="0.00"/>
+              </div>
+              <div>
+                <label>Expenditure (GMD)</label>
+                <input id="pSpentGMD" type="number" step="0.01" placeholder="0.00"/>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="pDesc" rows="3" placeholder="Brief description of the project…"></textarea>
+            </div>
+
+            <div class="form-group two-col">
+              <div>
+                <label>Milestones</label>
+                <div class="row gap">
+                  <input id="pMilestoneInput" placeholder="e.g., Foundation complete"/>
+                  <button id="addMilestone" type="button" class="btn btn-secondary">Add</button>
+                </div>
+                <div id="pMilestonesList" class="pill-row" style="margin-top:8px;"></div>
+              </div>
+              <div>
+                <label>Challenges</label>
+                <div class="row gap">
+                  <input id="pChallengeInput" placeholder="e.g., Rainy season delays"/>
+                  <button id="addChallenge" type="button" class="btn btn-secondary">Add</button>
+                </div>
+                <div id="pChallengesList" class="pill-row" style="margin-top:8px;"></div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Comments</label>
+              <textarea id="pComments" rows="3" placeholder="Any extra notes…"></textarea>
+            </div>
+
+            <div class="two-col">
+              <button id="saveProject" class="btn btn-primary" type="button">Save Project</button>
+              <button id="saveAdd" class="btn btn-secondary" type="button">Save & Add Another</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT PANEL -->
+        <aside class="card info-panel">
+          <div class="card-header">Info</div>
+          <div class="card-body">
+            <ul>
+              <li><strong>ID format:</strong> Auto from <strong>PRJ-0001</strong>.</li>
+              <li><strong>Statuses:</strong> Planned → In Progress → Completed (or On Hold/Cancelled).</li>
+              <li>Budget & expenditure in <strong>EUR & GMD</strong> — conversion uses your Settings rate.</li>
+              <li>Milestones & Challenges saved as lists, editable later.</li>
+            </ul>
+            <hr style="border:none;border-top:1px solid var(--line);margin:12px 0;">
+            <div class="row" style="gap:10px;flex-wrap:wrap">
+              <a class="btn btn-secondary" href="admin-projects.html">Back to Projects</a>
+              <a class="btn btn-secondary" href="admin-dashboard.html">Dashboard</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <section class="card" style="margin:18px 0;">
+        <div class="card-header">Recent Projects</div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th><th>Name</th><th>Status</th><th>Start</th><th>End</th>
+                  <th class="right">Budget (€)</th><th class="right">Budget (D)</th>
+                </tr>
+              </thead>
+              <tbody id="recentProjects">
+                <tr><td colspan="7" class="muted">No projects yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- NAV highlight -->
+  <script>
+    (function () {
+      const btn=document.querySelector('.menu-toggle'), nav=document.getElementById('adminNav');
+      if(btn&&nav) btn.addEventListener('click',()=>nav.classList.toggle('active'));
+      const key='projects';
+      document.querySelectorAll('.admin-nav a[data-key]').forEach(a=>a.dataset.key===key&&a.classList.add('active'));
+    })();
+  </script>
+
+  <!-- PAGE LOGIC -->
+  <script type="module">
+    import { api } from './js/nkd-bus.js';
+
+    const $ = s => document.querySelector(s);
+    const money = v => Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+    let fx = 75, milestones=[], challenges=[];
+
+    async function loadFX(){
+      try{ const r=await api.get('/settings/fx'); fx=Number(r?.eurToGmd)||fx; }catch{}
+      $('#fxLabel').textContent=`€1 → D${fx}`;
+    }
+    function bindConvert(eurSel,gmdSel){
+      const e=$(eurSel), g=$(gmdSel);
+      e?.addEventListener('input',()=>{ if(e.value) g.value=(e.value*fx).toFixed(2); });
+      g?.addEventListener('input',()=>{ if(g.value) e.value=(g.value/fx).toFixed(2); });
+    }
+    $('#fxEdit').addEventListener('click',()=>{const n=prompt('Set EUR→GMD rate',fx);if(n&&!isNaN(n)){fx=Number(n);$('#fxLabel').textContent=`€1 → D${fx}`;}});
+
+    function render(list,hostSel){
+      const host=$(hostSel);
+      if(!list.length){ host.innerHTML='<span class="muted">None</span>';return; }
+      host.innerHTML=list.map((t,i)=>`<span class="pill">${t}<button data-i="${i}" class="pill-x">×</button></span>`).join('');
+      host.querySelectorAll('.pill-x').forEach(b=>b.onclick=()=>{list.splice(b.dataset.i,1);render(list,hostSel);});
+    }
+    $('#addMilestone').onclick=()=>{const v=$('#pMilestoneInput').value.trim();if(v){milestones.push(v);$('#pMilestoneInput').value='';render(milestones,'#pMilestonesList');}};
+    $('#addChallenge').onclick=()=>{const v=$('#pChallengeInput').value.trim();if(v){challenges.push(v);$('#pChallengeInput').value='';render(challenges,'#pChallengesList');}};
+
+    async function loadNextId(){
+      try{
+        const r=await api.get('/projects/next-id'); 
+        $('#pId').value=r?.nextId||'PRJ-0001';
+      }catch{ $('#pId').value='PRJ-0001'; }
+    }
+
+    async function saveProject(reset=false){
+      const name=$('#pName').value.trim(),status=$('#pStatus').value,start=$('#pStart').value;
+      if(!name||!status||!start){alert('Please fill in required fields.');return;}
+      const data={
+        projectId:$('#pId').value,name,status,
+        startDate:start,endDate:$('#pEnd').value,
+        responsible:$('#pManager').value,
+        description:$('#pDesc').value,
+        milestones,challenges,
+        budgetEUR:+$('#pBudgetEUR').value||0,budgetGMD:+$('#pBudgetGMD').value||0,
+        expenditureEUR:+$('#pSpentEUR').value||0,expenditureGMD:+$('#pSpentGMD').value||0,
+        comments:$('#pComments').value
+      };
+      try{
+        await api.post('/projects',data);
+        alert('Project saved.');
+        if(reset){ location.reload(); }
+        else fetchRecent();
+      }catch{ alert('Save failed.'); }
+    }
+    $('#saveProject').onclick=()=>saveProject(false);
+    $('#saveAdd').onclick=()=>saveProject(true);
+
+    async function fetchRecent(){
+      try{
+        const r=await api.get('/projects?limit=5');
+        const rows=r?.data||r||[];
+        const tb=$('#recentProjects');
+        tb.innerHTML=rows.length?rows.map(x=>`
+        <tr>
+          <td>${x.projectId}</td>
+          <td>${x.name}</td>
+          <td>${x.status}</td>
+          <td>${x.startDate?new Date(x.startDate).toLocaleDateString():''}</td>
+          <td>${x.endDate?new Date(x.endDate).toLocaleDateString():''}</td>
+          <td class="right">€${money(x.budgetEUR)}</td>
+          <td class="right">D${money(x.budgetGMD)}</td>
+        </tr>`).join(''):`<tr><td colspan="7" class="muted">No projects yet.</td></tr>`;
+      }catch{}
+    }
+
+    bindConvert('#pBudgetEUR','#pBudgetGMD');
+    bindConvert('#pSpentEUR','#pSpentGMD');
+    loadFX();
+    loadNextId();
+    fetchRecent();
+    render(milestones,'#pMilestonesList');
+    render(challenges,'#pChallengesList');
+  </script>
+</body>
+</html>

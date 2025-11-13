@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Settings — Nema Kunku Diaspora</title>
+  <link rel="stylesheet" href="admin-style.css" />
+  <style>
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 820px){ .grid-2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+
+<body>
+  <!-- NAVBAR -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+
+      <nav class="admin-nav" id="adminNav">
+        <a href="admin-dashboard.html">Dashboard</a>
+        <a href="admin-members.html">Members</a>
+        <a href="admin-contributions.html">Contributions</a>
+        <a href="admin-expenditures.html">Expenditures</a>
+        <a href="admin-projects.html">Projects</a>
+        <a href="admin-meetings.html">Meetings</a>
+        <a href="admin-settings.html" class="active">Settings</a>
+      </nav>
+
+      <div class="admin-user">
+        <span data-user-slot>Admin • admin</span>
+        <a id="logoutTop" href="#">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="admin-shell">
+    <h1 class="page-title">Admin Settings</h1>
+
+    <section class="card">
+      <div class="card-header">Configuration</div>
+      <div class="card-body">
+        <!-- API Base -->
+        <div class="form-group">
+          <label for="apiBase">API Base URL <span class="required">required</span></label>
+          <input id="apiBase" placeholder="http://localhost:5001/api" />
+          <div class="form-hint">Your backend base URL will be saved locally.</div>
+          <div class="row gap mt">
+            <button id="saveApi" class="btn btn-primary">Save API Base</button>
+            <span id="apiMsg" class="muted"></span>
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid #e6eee6;margin:20px 0;" />
+
+        <!-- FX Rate -->
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="fxEurGmd">EUR → GMD Rate</label>
+            <input id="fxEurGmd" type="number" step="0.0001" placeholder="e.g. 73.5000" />
+            <div class="form-hint">Used for reports; saved locally.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="fxGmdEur">GMD → EUR Rate</label>
+            <input id="fxGmdEur" type="number" step="0.000001" placeholder="auto-calculated" />
+            <div class="form-hint">Auto-calculated from EUR → GMD.</div>
+          </div>
+        </div>
+
+        <div class="row gap mt">
+          <button id="saveFx" class="btn btn-primary">Save FX</button>
+          <button id="resetFx" class="btn btn-light">Reset</button>
+          <span id="fxMsg" class="muted"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- SCRIPT -->
+  <script type="module">
+    import { getUser, clearUser, setApiBase, getApiBase } from "./js/nkd-bus.js";
+
+    // Mobile nav toggle
+    const btn = document.querySelector(".menu-toggle");
+    const nav = document.getElementById("adminNav");
+    if (btn && nav) btn.addEventListener("click", () => nav.classList.toggle("active"));
+
+    // Current user display
+    const u = getUser();
+    const userSlot = document.querySelector("[data-user-slot]");
+    if (userSlot) userSlot.textContent = \`\${u?.name || 'Admin'} • \${u?.role || 'admin'}\`;
+
+    // Elements
+    const apiBaseEl = document.getElementById("apiBase");
+    const apiMsg = document.getElementById("apiMsg");
+    const fxEurGmd = document.getElementById("fxEurGmd");
+    const fxGmdEur = document.getElementById("fxGmdEur");
+    const fxMsg = document.getElementById("fxMsg");
+    const saveApi = document.getElementById("saveApi");
+    const saveFx = document.getElementById("saveFx");
+    const resetFx = document.getElementById("resetFx");
+    const logoutTop = document.getElementById("logoutTop");
+
+    // Initialize
+    apiBaseEl.value = getApiBase() || "http://localhost:5001/api";
+
+    const storedFx = JSON.parse(localStorage.getItem("nkd_fx") || "{}");
+    fxEurGmd.value = storedFx.eur_gmd || "";
+    fxGmdEur.value = storedFx.gmd_eur || "";
+
+    // Auto calculate inverse
+    fxEurGmd.addEventListener("input", () => {
+      const v = Number(fxEurGmd.value);
+      if (v > 0) fxGmdEur.value = (1 / v).toFixed(6);
+    });
+
+    // Save API
+    saveApi.addEventListener("click", () => {
+      const base = apiBaseEl.value.trim();
+      if (!base) { apiMsg.textContent = "Please enter API base."; return; }
+      setApiBase(base);
+      apiMsg.textContent = "API Base saved ✔";
+    });
+
+    // Save FX
+    saveFx.addEventListener("click", () => {
+      const eur = Number(fxEurGmd.value);
+      const gmd = Number(fxGmdEur.value);
+      if (!eur || !gmd) { fxMsg.textContent = "Enter valid FX rates."; return; }
+      localStorage.setItem("nkd_fx", JSON.stringify({ eur_gmd: eur, gmd_eur: gmd }));
+      fxMsg.textContent = "FX saved ✔";
+    });
+
+    // Reset FX
+    resetFx.addEventListener("click", () => {
+      localStorage.removeItem("nkd_fx");
+      fxEurGmd.value = "";
+      fxGmdEur.value = "";
+      fxMsg.textContent = "FX cleared.";
+    });
+
+    // Logout
+    logoutTop.addEventListener("click", e => {
+      e.preventDefault();
+      clearUser();
+      window.location.href = "login.html";
+    });
+  </script>
+</body>
+</html>

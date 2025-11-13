@@ -1,0 +1,31 @@
+{
+  "name": "nema-kunku-diaspora-backend",
+  "version": "1.0.1",
+  "description": "Backend API for Nema Kunku Diaspora system (Members, Contributions, Projects, Meetings, Expenditures).",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon --quiet --watch server.js --watch src server.js",
+    "start": "NODE_ENV=production node server.js",
+    "seed:admin": "node ./scripts/seedAdmin.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^7.8.7",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "author": "Nema Kunku Diaspora",
+  "license": "ISC",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

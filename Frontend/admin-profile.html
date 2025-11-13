@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Admin Profile | Nema Kunku Diaspora</title>
+  <link rel="stylesheet" href="admin-style.css" />
+</head>
+<body>
+
+<!-- Injected Topbar -->
+<script type="module">
+  import { requireAuth } from "./js/auth.js";
+  const ses = requireAuth({ role: "admin" });
+
+  // Build topbar dynamically (consistent with admin pages)
+  const hdr = document.createElement("header");
+  hdr.className = "admin-topbar";
+  hdr.innerHTML = `
+    <div class="container">
+      <div class="brand">
+        <img src="Nema Kunku Diaspora Logo.png" alt="NKD" />
+        <span>Nema Kunku Diaspora — Admin</span>
+      </div>
+      <nav class="topnav">
+        <a href="admin-dashboard.html">Dashboard</a>
+        <a href="admin-members.html">Members</a>
+        <a href="admin-contributions.html">Contributions</a>
+        <a href="admin-expenditures.html">Expenditures</a>
+        <a href="admin-projects.html">Projects</a>
+        <a href="admin-meetings.html">Meetings</a>
+        <a href="manage-roles.html">Roles</a>
+        <a class="active" href="admin-profile.html">My Profile</a>
+        <a id="logoutLink" href="javascript:void(0)">Logout</a>
+      </nav>
+    </div>`;
+  document.body.prepend(hdr);
+
+  // Logout hook
+  import("./js/auth.js").then(({ logout }) => {
+    document.getElementById("logoutLink")?.addEventListener("click", logout);
+  });
+</script>
+
+<main class="admin-shell">
+  <h1 class="page-title">My Admin Profile</h1>
+
+  <!-- Compact header -->
+  <section class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <span id="hdr_name">—</span>
+        <small id="hdr_id" style="color:#555;margin-left:10px;">—</small>
+        <span id="hdr_role" class="badge badge--admin" style="margin-left:8px;">admin</span>
+      </h3>
+    </div>
+    <div class="card-body">
+      <p>Your administrative account information and contact details.</p>
+    </div>
+  </section>
+
+  <!-- Account Info -->
+  <section class="card mt-16">
+    <div class="card-header">
+      <h3 class="card-title">Account</h3>
+    </div>
+    <div class="card-body grid-3">
+      <div class="input">
+        <label>Member ID</label>
+        <input id="acc_memberId" type="text" disabled />
+      </div>
+      <div class="input">
+        <label>Role</label>
+        <input id="acc_role" type="text" disabled />
+      </div>
+      <div class="input">
+        <label>Member Since</label>
+        <input id="acc_since" type="text" disabled />
+      </div>
+    </div>
+  </section>
+
+  <!-- Personal Details -->
+  <section class="card mt-16">
+    <div class="card-header">
+      <h3 class="card-title">Personal Details</h3>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="input">
+          <label>Full Name</label>
+          <input id="p_name" type="text" placeholder="e.g., Salme Ture" />
+        </div>
+        <div class="input">
+          <label>Email</label>
+          <input id="p_email" type="email" placeholder="e.g., salmemture@gmail.com" />
+        </div>
+        <div class="input">
+          <label>Phone</label>
+          <input id="p_phone" type="tel" placeholder="+44 7000 000000" />
+        </div>
+        <div class="input">
+          <label>Country</label>
+          <input id="p_country" type="text" placeholder="e.g., United Kingdom" />
+        </div>
+        <div class="input">
+          <label>Position</label>
+          <input id="p_position" type="text" placeholder="e.g., Administrator" />
+        </div>
+        <div class="input">
+          <label>Preferred Contact Method</label>
+          <select id="p_contact">
+            <option value="">— Select —</option>
+            <option value="email">Email</option>
+            <option value="phone">Phone</option>
+            <option value="whatsapp">WhatsApp</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap">
+        <button id="saveProfileBtn" class="btn btn--primary">Save Changes</button>
+        <a class="btn btn--outline" href="change-password.html">Change Password</a>
+        <a class="btn" href="admin-dashboard.html">Back to Dashboard</a>
+      </div>
+    </div>
+  </section>
+
+  <p class="admin-footer">© 2025 Nema Kunku Diaspora. All rights reserved.</p>
+</main>
+
+<script type="module" src="js/admin-profile.js"></script>
+</body>
+</html>
