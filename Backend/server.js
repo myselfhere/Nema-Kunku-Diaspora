@@ -6,8 +6,6 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import path from "path";
-import { fileURLToPath } from "url";
 
 // Routes
 import memberRoutes from "./routes/memberRoutes.js";
@@ -21,82 +19,22 @@ dotenv.config();
 
 const app = express();
 
-// ---------- ES module __dirname helper ----------
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 // ---------- Env ----------
 const DEFAULT_PORT = Number(process.env.PORT || 5000);
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/nkd";
+const MONGO_URI = process.env.MONGO_URI;
 
-// ---------- Core middleware ----------
+// ---------- Middleware ----------
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.set("trust proxy", 1);
 
-// ---------- CORS (robust) ----------
-const allowedOrigins = new Set([
-  "http://127.0.0.1:5500",
-  "http://localhost:5500",
-  "https://nema-kunku-diaspora.onrender.com",
-  // add your live domain(s) when ready:
-  // "https://nemakunkudiaspora.org",
-]);
+// CORS
+app.use(cors());
 
-const corsOptions = {
-  origin(origin, cb) {
-    // Allow tools/curl/postman (no origin) and approved origins
-    if (!origin || allowedOrigins.has(origin)) return cb(null, true);
-    return cb(new Error(`CORS not allowed for origin: ${origin}`));
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
-
-app.use(cors(corsOptions));
-// Also reply to preflight quickly
-app.options("*", cors(corsOptions));
-
-// Helpful headers for some setups
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (!origin || allowedOrigins.has(origin)) {
-    res.header("Vary", "Origin");
-    res.header("Access-Control-Allow-Credentials", "true");
-  }
-  next();
-});
-
-// ---------- Serve Frontend (static files) ----------
-const frontendPath = path.join(__dirname, "Frontend");
-
-// All files in /Frontend available under /Frontend/...
-app.use("/Frontend", express.static(frontendPath));
-
-// Optionally also serve root page (homepage) from Frontend index
-// Visiting just "/" will show the website, not raw text.
-app.get("/", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
-});
-
-// ---------- Health & Diagnostics ----------
-app.get("/api", (_req, res) => {
-  res.send("✅ Nema Kunku Diaspora API is running…");
-});
-
-app.get("/api/_cors-check", (req, res) => {
-  res.json({
-    ok: true,
-    origin: req.headers.origin || null,
-    allowOrigin: res.get("Access-Control-Allow-Origin") || null,
-    allowCreds: res.get("Access-Control-Allow-Credentials") || null,
-  });
-});
-
-app.get("/api/_health", (_req, res) => {
-  res.json({ ok: true, mongo: mongoose.connection.readyState });
+// ---------- Health ----------
+app.get("/", (_req, res) => {
+  res.send("Nema Kunku Diaspora API is running…");
 });
 
 // ---------- API Routes ----------
@@ -109,22 +47,11 @@ app.use("/api/auth", authRoutes);
 
 // ---------- MongoDB ----------
 mongoose
-  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err?.message || err);
-    // keep running; app still serves 500s until DB is up
-  });
-
-// ---------- Fallback: send SPA-ish frontend for unknown routes ----------
-app.get("*", (req, res, next) => {
-  // If it's clearly an API route, skip to 404/handlers
-  if (req.path.startsWith("/api/")) return next();
-  // Otherwise, send the main index or a simple 404 page
-  res.sendFile(path.join(frontendPath, "index.html"));
-});
+  .connect(MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB error:", err.message));
 
 // ---------- Start ----------
-app.listen(DEFAULT_PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${DEFAULT_PORT}`);
-});
+app.listen(DEFAULT_PORT, () =>
+  console.log(`Server running on port ${DEFAULT_PORT}`)
+);
