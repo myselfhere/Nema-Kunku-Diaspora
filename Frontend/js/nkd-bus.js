@@ -96,15 +96,25 @@ export function clearUser() {
 export function roleHome(role = "member") {
   const r = (role || "").toLowerCase();
 
-  // 🔸 President has own dashboard
+  // President
   if (r === "president") return "president-dashboard.html";
 
-  // 🔸 Admin & officers → admin dashboard
-  if (["admin", "financial", "project-manager", "secretary"].includes(r)) {
-    return "admin-dashboard.html";
-  }
+  // Admin
+  if (r === "admin") return "admin-dashboard.html";
 
-  // 🔸 Everyone else → member portal
+  // Financial Secretary
+  if (r === "financial") return "financial-dashboard.html";
+
+  // Project Manager
+  if (r === "project-manager") return "project-dashboard.html";
+
+  // Secretary
+  if (r === "secretary") return "secretary-dashboard.html";
+
+  // Viewer – read-only admin list
+  if (r === "viewer") return "admin-members.html";
+
+  // Default: normal member
   return "member-dashboard.html";
 }
 
@@ -197,6 +207,47 @@ export const text = (s, v) => {
 /* ---------------- Member resolving ---------------- */
 export const norm = (v = "") => String(v || "").trim();
 
+/**
+ * Normalise a member object into a consistent shape for dashboards.
+ * This is what member-dashboard.js is importing as `normalizeMember`.
+ */
+export function normalizeMember(raw = {}) {
+  if (!raw) return null;
+
+  const memberId =
+    raw.memberId || raw.memberID || raw.code || raw.id || "";
+
+  const name =
+    raw.name ||
+    [raw.firstName, raw.lastName].filter(Boolean).join(" ") ||
+    "";
+
+  const email = raw.email || raw.username || "";
+  const phone = raw.phone || raw.contact || raw.mobile || "";
+  const country = raw.country || raw.location || "";
+  const role = (raw.role || "member").toLowerCase();
+  const contributionPlan = raw.contributionPlan || raw.plan || "Annually";
+  const status = raw.status || "Active";
+
+  const joinedRaw =
+    raw.memberSince || raw.joined || raw.joinDate || raw.createdAt;
+  const memberSince = joinedRaw ? toYYYYMMDD(joinedRaw) : "";
+
+  return {
+    ...raw,
+    _id: raw._id || raw.id || null,
+    memberId,
+    name,
+    email,
+    phone,
+    country,
+    role,
+    contributionPlan,
+    status,
+    memberSince,
+  };
+}
+
 export async function resolveMemberByIdentifier(identifier = "") {
   const id = norm(identifier);
   if (!id) return null;
@@ -204,7 +255,8 @@ export async function resolveMemberByIdentifier(identifier = "") {
   // 1) Try direct /members/:id (Mongo _id)
   try {
     const one = await api.get(`/members/${encodeURIComponent(id)}`);
-    if (one && (one._id || one.memberId || one.email)) return one;
+    if (one && (one._id || one.memberId || one.email))
+      return normalizeMember(one);
   } catch {
     // ignore – fall back to list scan
   }
@@ -213,14 +265,15 @@ export async function resolveMemberByIdentifier(identifier = "") {
   const list = await api.getMembers().catch(() => []);
   const needle = id.toLowerCase();
 
-  return (
+  const found =
     list.find(
       (m) =>
         (m?.memberId &&
           String(m.memberId).toLowerCase() === needle) ||
         (m?.email && String(m.email).toLowerCase() === needle)
-    ) || null
-  );
+    ) || null;
+
+  return found ? normalizeMember(found) : null;
 }
 
 /* ---------------- Offline role guess ---------------- */

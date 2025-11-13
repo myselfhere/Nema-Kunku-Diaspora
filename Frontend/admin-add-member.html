@@ -15,6 +15,7 @@
 </head>
 
 <body>
+  <!-- TOPBAR -->
   <header class="admin-topbar">
     <div class="container row">
       <button class="menu-toggle" aria-label="Menu">☰</button>
@@ -30,19 +31,24 @@
       </nav>
 
       <div class="admin-user">
-        <span data-user-slot>Offline Admin • admin</span>
+        <span data-user-slot>Salme Ture • admin</span>
         <a href="login.html">Logout</a>
       </div>
     </div>
   </header>
 
+  <!-- MAIN -->
   <main class="admin-shell">
     <div class="row space-between align-center">
       <h1 class="page-title">Add Member</h1>
 
       <div class="row gap-8">
         <a href="admin-members.html" class="btn btn-light">← Back to Members</a>
-        <button id="saveMember" class="btn btn-primary">Save Member</button>
+
+        <!-- IMPORTANT: this id MUST exist -->
+        <button id="saveMember" type="button" class="btn btn-primary">
+          Save Member
+        </button>
       </div>
     </div>
 
@@ -52,54 +58,54 @@
 
       <div class="card-body grid-2">
         <div>
-          <label>Full Name *</label>
-          <input id="fullName" required />
+          <label for="fullName">Full Name *</label>
+          <input id="fullName" placeholder="e.g., Salme Ture" />
         </div>
 
         <div>
-          <label>Email</label>
-          <input id="email" type="email" />
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="name@example.com" />
         </div>
 
         <div>
-          <label>Phone</label>
-          <input id="phone" />
+          <label for="phone">Phone</label>
+          <input id="phone" placeholder="+44..." />
         </div>
 
         <div>
-          <label>Country</label>
-          <input id="country" />
+          <label for="country">Country</label>
+          <input id="country" placeholder="United Kingdom" />
         </div>
 
         <div>
-          <label>Position</label>
-          <input id="position" placeholder="Optional" />
+          <label for="position">Position (optional)</label>
+          <input id="position" placeholder="Member / Officer title" />
         </div>
 
         <div>
-          <label>Preferred Contact</label>
+          <label for="contactMethod">Preferred Contact</label>
           <select id="contactMethod">
             <option>Not set</option>
-            <option>Email</option>
             <option>Phone</option>
             <option>WhatsApp</option>
+            <option>Email</option>
           </select>
         </div>
       </div>
     </section>
 
-    <!-- Membership -->
+    <!-- Membership & Plan -->
     <section class="card mt-16">
       <div class="card-header">Membership & Plan</div>
 
       <div class="card-body grid-2">
         <div>
-          <label>Member ID *</label>
-          <input id="memberId" required />
+          <label for="memberId">Member ID *</label>
+          <input id="memberId" placeholder="NKD001" />
         </div>
 
         <div>
-          <label>Status</label>
+          <label for="status">Status</label>
           <select id="status">
             <option>Active</option>
             <option>Pending</option>
@@ -108,7 +114,7 @@
         </div>
 
         <div>
-          <label>Plan</label>
+          <label for="plan">Plan</label>
           <select id="plan">
             <option>Annually</option>
             <option>Semi-Annual</option>
@@ -116,19 +122,19 @@
         </div>
 
         <div>
-          <label>Joined</label>
+          <label for="joined">Joined</label>
           <input id="joined" type="date" />
         </div>
       </div>
     </section>
 
-    <!-- Login -->
+    <!-- Account Access (Login) -->
     <section class="card mt-16">
       <div class="card-header">Account Access (Login)</div>
 
       <div class="card-body grid-2">
         <div>
-          <label>Role</label>
+          <label for="role">Role</label>
           <select id="role">
             <option value="member">Member</option>
             <option value="admin">Admin</option>
@@ -140,15 +146,18 @@
         </div>
 
         <div>
-          <label>Username</label>
-          <input id="username" />
+          <label for="username">Username</label>
+          <input id="username" placeholder="email or member ID" />
         </div>
 
         <div>
-          <label>Temporary Password</label>
+          <label for="tempPassword">Temporary Password</label>
           <div style="display:flex;gap:8px;">
             <input id="tempPassword" placeholder="auto-generate" />
-            <button id="genPass" type="button" class="btn btn-light">Generate</button>
+            <!-- IMPORTANT: id genPass -->
+            <button id="genPass" type="button" class="btn btn-light">
+              Generate
+            </button>
           </div>
         </div>
 
@@ -161,7 +170,10 @@
       </div>
 
       <div class="card-footer">
-        <button id="copyLogin" class="btn btn-secondary">Copy Login Details</button>
+        <!-- IMPORTANT: id copyLogin -->
+        <button id="copyLogin" type="button" class="btn btn-secondary">
+          Copy Login Details
+        </button>
       </div>
     </section>
 

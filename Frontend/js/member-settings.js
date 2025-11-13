@@ -1,135 +1,128 @@
 // Frontend/js/member-settings.js
-// Member "My Settings" page: account info + change password
+// Member "My Settings" page – account info + change password
 
 import {
   api,
   getUser,
   requireRole,
-  toYYYYMMDD,
-  $,
-  text,
+  activeNav,
+  toast,
 } from "./nkd-bus.js";
 
-// Only logged-in members can be here
-requireRole([]); // just ensure logged in; any role is allowed
+console.log("[Member Settings] script loaded");
 
-document.addEventListener("DOMContentLoaded", init);
+const $ = (id) => document.getElementById(id);
 
-function init() {
-  const u = getUser();
-  if (!u) return;
+// ----------------- INIT -----------------
+window.addEventListener("DOMContentLoaded", () => {
+  console.log("[Member Settings] DOM ready");
 
-  console.log("[Member Settings] init for", u.memberId || u.email);
+  // Any logged-in member can view their own settings
+  requireRole([]);
 
-  // ---- account info fields (top section) ----
-  const idEl = $("#acct_memberId");
-  const nameEl = $("#acct_name");
-  const emailEl = $("#acct_email");
-  const planEl = $("#acct_plan");
-  const sinceEl = $("#acct_since");
-  const statusEl = $("#acct_status");
+  activeNav("settings");
+
+  const user = getUser();
+  if (!user) {
+    console.warn("[Member Settings] No user in storage, sending to login");
+    location.href = "login.html";
+    return;
+  }
+
+  // Fill account info section (top card)
+  fillAccountInfo(user);
+
+  // Wire up password form
+  const saveBtn = $("#savePasswordBtn") || $("#btnSavePassword");
+  if (saveBtn) {
+    console.log("[Member Settings] Save password button found");
+    saveBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      handleChangePassword(user);
+    });
+  } else {
+    console.warn("[Member Settings] Save password button NOT found");
+  }
+});
+
+// ----------------- UI: account info -----------------
+function fillAccountInfo(u) {
+  // These IDs should match your member-settings.html
+  const idEl = $("#viewMemberId") || $("#memberId");
+  const nameEl = $("#viewFullName") || $("#fullName");
+  const emailEl = $("#viewEmail") || $("#email");
+  const planEl = $("#viewPlan") || $("#contributionPlan");
 
   if (idEl) idEl.value = u.memberId || "";
   if (nameEl) nameEl.value = u.name || "";
   if (emailEl) emailEl.value = u.email || "";
-  if (planEl) planEl.value = u.contributionPlan || "";
-  if (sinceEl) sinceEl.value = u.memberSince ? toYYYYMMDD(u.memberSince) : "";
-  if (statusEl) statusEl.value = u.status || "Active";
+  if (planEl) planEl.value = u.contributionPlan || "Annually";
+}
 
-  // Also refresh from API using memberId for freshest data
-  if (u.memberId) {
-    api
-      .get(`/members?memberId=${encodeURIComponent(u.memberId)}`)
-      .then((raw) => {
-        const item = Array.isArray(raw?.items) ? raw.items[0] : null;
-        if (!item) return;
-        console.log("[Member Settings] refreshed member from API", item);
+// ----------------- Change password -----------------
+async function handleChangePassword(user) {
+  const currentPassword =
+    ($("#currentPassword")?.value || $("#oldPassword")?.value || "").trim();
+  const newPassword =
+    ($("#newPassword")?.value || $("#passwordNew")?.value || "").trim();
+  const confirmPassword =
+    ($("#confirmPassword")?.value || $("#passwordConfirm")?.value || "").trim();
 
-        if (idEl) idEl.value = item.memberId || "";
-        if (nameEl) nameEl.value = item.name || "";
-        if (emailEl) emailEl.value = item.email || "";
-        if (planEl) planEl.value = item.contributionPlan || "";
-        if (sinceEl)
-          sinceEl.value = item.memberSince
-            ? toYYYYMMDD(item.memberSince)
-            : "";
-        if (statusEl) statusEl.value = item.status || "Active";
-      })
-      .catch((err) => console.warn("[Member Settings] refresh failed", err));
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    toast("Please fill in all password fields.", "warn");
+    return;
   }
 
-  // ---- change password section ----
-  const curEl = $("#pwd_current") || $("#currentPassword");
-  const newEl = $("#pwd_new") || $("#newPassword");
-  const cfmEl = $("#pwd_confirm") || $("#confirmPassword");
-  const msgEl = $("#pwd_msg") || $("#passwordMsg");
-  const btn = $("#pwd_saveBtn") || $("#savePasswordBtn");
-  const form = $("#pwd_form") || $("#passwordForm");
-
-  function showMsg(msg, ok = false) {
-    if (!msgEl) {
-      alert(msg);
-      return;
-    }
-    msgEl.textContent = msg;
-    msgEl.style.color = ok ? "#1b5e20" : "#b00020";
+  if (newPassword.length < 8) {
+    toast("New password must be at least 8 characters.", "warn");
+    return;
   }
 
-  async function handleChangePassword(ev) {
-    if (ev) ev.preventDefault();
-    if (!curEl || !newEl || !cfmEl) return;
-
-    const currentPassword = curEl.value.trim();
-    const newPassword = newEl.value.trim();
-    const confirm = cfmEl.value.trim();
-
-    if (!currentPassword || !newPassword) {
-      showMsg("Please enter current and new password.");
-      return;
-    }
-    if (newPassword.length < 8) {
-      showMsg("New password must be at least 8 characters.");
-      return;
-    }
-    if (newPassword !== confirm) {
-      showMsg("New password and confirmation do not match.");
-      return;
-    }
-
-    const userNow = getUser();
-    if (!userNow) {
-      showMsg("You are not logged in.", false);
-      return;
-    }
-
-    // 🔑 THIS is the important part:
-    // send identifier + currentPassword + newPassword
-    const identifier = userNow.email || userNow.memberId;
-    if (!identifier) {
-      showMsg("Missing member identifier (email or ID).", false);
-      return;
-    }
-
-    const body = { identifier, currentPassword, newPassword };
-
-    console.log("[Member Settings] change-password payload", {
-      identifier,
-    });
-
-    try {
-      await api.post("/auth/change-password", body);
-      showMsg("Password updated successfully ✔", true);
-      curEl.value = "";
-      newEl.value = "";
-      cfmEl.value = "";
-    } catch (err) {
-      console.error("[Member Settings] change-password failed", err);
-      showMsg(
-        "Could not update password. Check your current password and try again."
-      );
-    }
+  if (newPassword !== confirmPassword) {
+    toast("New password and confirmation do not match.", "error");
+    return;
   }
 
-  if (form) form.addEventListener("submit", handleChangePassword);
-  if (btn && !form) btn.addEventListener("click", handleChangePassword);
+  // This is what the backend expects: identifier + newPassword (+ optional currentPassword)
+  const identifier =
+    user.email || user.memberId || user.username || user._id || "";
+
+  if (!identifier) {
+    toast("Cannot detect your account identifier. Please log in again.", "error");
+    console.error("[Member Settings] No identifier on user object:", user);
+    return;
+  }
+
+  const body = {
+    identifier,
+    currentPassword,
+    newPassword,
+  };
+
+  console.log("[Member Settings] change-password payload", {
+    identifier,
+    hasCurrent: !!currentPassword,
+    hasNew: !!newPassword,
+  });
+
+  try {
+    await api.post("/auth/change-password", body);
+    toast("Password updated successfully.", "ok");
+
+    // Clear form fields
+    if ($("#currentPassword")) $("#currentPassword").value = "";
+    if ($("#newPassword")) $("#newPassword").value = "";
+    if ($("#confirmPassword")) $("#confirmPassword").value = "";
+
+    // Update local user: they no longer need to change password
+    const updated = { ...user, mustChangePassword: false };
+    localStorage.setItem("nkd_user", JSON.stringify(updated));
+  } catch (err) {
+    console.error("[Member Settings] change password failed", err);
+    const msg =
+      err?.message?.includes("identifier and newPassword are required")
+        ? "Server did not receive identifier/new password – please try again."
+        : err?.message || "Error updating password.";
+    toast(msg, "error");
+  }
 }
