@@ -1,118 +1,62 @@
-/* =========================================================
-   Nema Kunku Diaspora — Minimal Auth + RBAC Utilities
-   Handles login session, role-based access, and redirects.
-   ========================================================= */
+// Frontend/js/nkd-auth.js
+// Auth helpers: login, change password (logged-in), reset (admin → member)
 
-// Key used in localStorage
-const NKD_AUTH_KEY = 'nkd_user';
+import { api } from "./nkd-bus.js";
 
-/* -------- Core getters and setters -------- */
-export function getUser() {
-  try {
-    return JSON.parse(localStorage.getItem(NKD_AUTH_KEY) || 'null');
-  } catch {
-    return null;
+/* ---------------- CHANGE PASSWORD (LOGGED-IN MEMBER) -------------- */
+/**
+ * changePassword
+ *  - identifier: email OR memberId (e.g. "salmeture@gmail.com" or "NKD001")
+ *  - currentPassword: the old password (for verification)
+ *  - newPassword: new password string
+ *
+ * Backend: POST /api/auth/change-password
+ * body: { identifier, currentPassword, newPassword }
+ */
+export async function changePassword(identifier, currentPassword, newPassword) {
+  if (!identifier) throw new Error("identifier is required");
+  if (!currentPassword) throw new Error("Current password required");
+  if (!newPassword || newPassword.length < 8) {
+    throw new Error("New password must be at least 8 characters.");
   }
+
+  const body = { identifier, currentPassword, newPassword };
+  return api.post("/auth/change-password", body);
 }
 
-export function setUser(user) {
-  localStorage.setItem(NKD_AUTH_KEY, JSON.stringify(user || null));
+/* ---------------- START RESET (ADMIN TRIGGER) ---------------- */
+/**
+ * startReset
+ *  Admin calls this with the member's **_id** or memberId (NKD001).
+ *
+ *  Example from admin UI:
+ *    const r = await startReset(member._id);
+ *    console.log(r.token); // send via WhatsApp
+ *
+ * Backend: POST /api/members/:id/reset
+ * (route has been updated to accept either Mongo _id or memberId)
+ */
+export async function startReset(memberIdOrObjectId) {
+  if (!memberIdOrObjectId) throw new Error("Member ID required");
+  return api.post(
+    `/members/${encodeURIComponent(memberIdOrObjectId)}/reset`,
+    {}
+  );
 }
 
-export function clearUser() {
-  localStorage.removeItem(NKD_AUTH_KEY);
-}
-
-export function isLoggedIn() {
-  return !!getUser();
-}
-
-/* -------- Auth Guards -------- */
-export function requireAuth() {
-  if (!isLoggedIn()) {
-    location.href = 'login.html';
+/* ---------------- FINISH RESET (MEMBER WITH TOKEN) ------------- */
+/**
+ * finishReset
+ *  Member opens link: change-password.html?token=XYZ
+ *  This sends token + new password to:
+ *    POST /api/members/reset/confirm
+ *  body: { token, newPassword }
+ */
+export async function finishReset(token, newPassword) {
+  if (!token) throw new Error("Reset token missing");
+  if (!newPassword || newPassword.length < 8) {
+    throw new Error("New password must be at least 8 characters.");
   }
-}
 
-export function hasRole(...roles) {
-  const u = getUser();
-  if (!u) return false;
-  return roles.includes(u.role);
-}
-
-export function requireRole(allowed) {
-  const roles = Array.isArray(allowed) ? allowed : [allowed];
-  if (!hasRole(...roles)) {
-    location.href = 'unauthorized.html';
-  }
-}
-
-/* -------- ACL Map (for finer permissions) -------- */
-const ACL = {
-  'meetings:view': ['admin', 'secretary'],
-  'meetings:edit': ['admin', 'secretary'],
-  'projects:view': ['admin', 'project-manager'],
-  'projects:edit': ['admin', 'project-manager'],
-  'finance:edit': ['admin', 'financial'],
-  'members:manage': ['admin'],
-};
-
-export function can(action) {
-  const u = getUser();
-  if (!u) return false;
-  const allowed = ACL[action] || [];
-  return allowed.includes(u.role);
-}
-
-/* -------- Navbar Role Conditioning --------
-   Add data-roles="admin,secretary" to elements to show only
-   for those roles.  Add data-user-slot to show "Name • Role".
----------------------------------------------------------- */
-export function conditionNav() {
-  const u = getUser();
-
-  // Hide restricted links
-  document.querySelectorAll('[data-roles]').forEach(el => {
-    const allowed = (el.dataset.roles || '')
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
-    if (allowed.length && (!u || !allowed.includes(u.role))) {
-      el.style.display = 'none';
-    }
-  });
-
-  // Show name + role if slot exists
-  const slot = document.querySelector('[data-user-slot]');
-  if (slot && u) slot.textContent = `${u.name} • ${prettyRole(u.role)}`;
-}
-
-/* -------- Pretty Role Text -------- */
-export function prettyRole(role) {
-  return (role || '')
-    .replace(/-/g, ' ')
-    .replace(/\b\w/g, m => m.toUpperCase());
-}
-
-/* -------- Role-Based Landing After Login -------- */
-export function goHomeByRole(user) {
-  switch (user.role) {
-    case 'admin':
-      location.href = 'admin-dashboard.html';
-      break;
-    case 'secretary':
-      location.href = 'admin-secretary.html';
-      break;
-    case 'project-manager':
-      location.href = 'projects-dashboard.html';
-      break;
-    case 'financial':
-      location.href = 'admin-expenditures.html';
-      break;
-    case 'viewer':
-      location.href = 'admin-projects.html'; // read-only area
-      break;
-    default:
-      location.href = 'member-dashboard.html';
-  }
+  return api.post("/members/reset/confirm", { token, newPassword });
 }

@@ -7,7 +7,9 @@ const LS = {
   api: "nkd_api_base",
 };
 
-function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+function save(key, val) {
+  localStorage.setItem(key, JSON.stringify(val));
+}
 function load(key, d = null) {
   try {
     const v = localStorage.getItem(key);
@@ -21,18 +23,50 @@ function load(key, d = null) {
 // ⬇️ IMPORTANT: use Render URL now, NOT localhost
 const DEFAULT_API = "https://nema-kunku-diaspora.onrender.com/api";
 
-export function setApiBase(url) { save(LS.api, url || DEFAULT_API); }
-export function getApiBase() { return load(LS.api, DEFAULT_API); }
+export function setApiBase(url) {
+  const use = url && url.trim() ? url.trim() : DEFAULT_API;
+  save(LS.api, use);
+  console.log("[NKD] API base (set):", use);
+}
+export function getApiBase() {
+  const v = load(LS.api, DEFAULT_API);
+  return v || DEFAULT_API;
+}
 
-// Log for sanity
+// Log for sanity on every page load
 (() => console.log("[NKD] API base (saved):", getApiBase()))();
 
 /* ---------------- Tiny fetch client ---------------- */
+
+/**
+ * Internal helper: rewrite paths like "/members/NKD001"
+ * to "/members?memberId=NKD001" so the backend query
+ * route is used instead of the :id (ObjectId) route.
+ */
+function normalizePath(path) {
+  if (path.startsWith("http")) return path; // absolute URL, leave as-is
+
+  let clean = path.replace(/^\//, ""); // remove leading /
+
+  if (clean.startsWith("members/")) {
+    const tail = clean.slice("members/".length);
+    // NKD-style memberId: NKD001, NKD023, etc.
+    if (/^NKD\d+$/i.test(tail)) {
+      clean = `members?memberId=${encodeURIComponent(tail)}`;
+    }
+  }
+
+  return "/" + clean;
+}
+
 async function request(path, opts = {}) {
   const base = getApiBase();
-  const url = path.startsWith("http")
-    ? path
-    : (base.replace(/\/$/, "") + "/" + path.replace(/^\//, ""));
+
+  const isAbs = path.startsWith("http");
+  const finalPath = isAbs ? path : normalizePath(path);
+  const url = isAbs ? finalPath : base.replace(/\/$/, "") + finalPath;
+
+  console.log("[NKD] → request", opts.method || "GET", url);
 
   const res = await fetch(url, {
     headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
@@ -41,11 +75,13 @@ async function request(path, opts = {}) {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
+    console.error("[NKD] ← error", res.status, res.statusText, text);
     throw new Error(`${res.status} ${res.statusText}: ${text}`);
   }
 
   const ct = res.headers.get("content-type") || "";
-  return ct.includes("application/json") ? res.json() : res.text();
+  const out = ct.includes("application/json") ? await res.json() : await res.text();
+  return out;
 }
 
 export const api = {
@@ -55,33 +91,44 @@ export const api = {
   post: (p, body) => request(p, { method: "POST", body: JSON.stringify(body) }),
   put: (p, body) => request(p, { method: "PUT", body: JSON.stringify(body) }),
   del: (p) => request(p, { method: "DELETE" }),
+
   async getMembers() {
-    const r = await request("/members").catch(() => ({ items: [] }));
-    return Array.isArray(r) ? r : (r.items || []);
+    const r = await request("/members").catch((err) => {
+      console.error("[NKD] getMembers failed, returning []", err);
+      return { items: [] };
+    });
+    console.log("[NKD] getMembers OK, raw:", r);
+    return Array.isArray(r) ? r : r.items || [];
   },
+
   async getContributions() {
     const r = await request("/contributions").catch(() => ({ items: [] }));
-    return Array.isArray(r) ? r : (r.items || []);
+    return Array.isArray(r) ? r : r.items || [];
   },
+
   async getMeetings() {
     const r = await request("/meetings").catch(() => ({ items: [] }));
-    return Array.isArray(r) ? r : (r.items || []);
+    return Array.isArray(r) ? r : r.items || [];
   },
 };
 
 /* ---------------- User session ---------------- */
-export function getUser() { return load(LS.user, null); }
-export function setUser(u) { save(LS.user, u); }
-export function clearUser() { localStorage.removeItem(LS.user); }
+export function getUser() {
+  return load(LS.user, null);
+}
+export function setUser(u) {
+  save(LS.user, u);
+}
+export function clearUser() {
+  localStorage.removeItem(LS.user);
+}
 
 /* Role ➜ default home page */
 export function roleHome(role = "member") {
   const r = (role || "").toLowerCase();
 
   // 🔸 President has own dashboard
-  if (r === "president") {
-    return "president-dashboard.html";
-  }
+  if (r === "president") return "president-dashboard.html";
 
   // 🔸 Admin & officers → admin dashboard
   if (["admin", "financial", "project-manager", "secretary"].includes(r)) {
@@ -99,7 +146,7 @@ export function requireRole(roles = []) {
   if (!roles.length) return;
 
   const ok = roles
-    .map(x => x.toLowerCase())
+    .map((x) => x.toLowerCase())
     .includes((u.role || "").toLowerCase());
 
   if (!ok) go(roleHome(u.role || "member"));
@@ -124,7 +171,7 @@ export function activeNav(key = "") {
     document.querySelectorAll("header a, .admin-topbar a, nav a, .navbar a")
   );
 
-  links.forEach(a => {
+  links.forEach((a) => {
     const k = (a.dataset.key || a.textContent || "").trim().toLowerCase();
     a.classList.toggle("active", want && k === want);
   });
@@ -143,12 +190,12 @@ export function activeNav(key = "") {
 const euro = new Intl.NumberFormat("en-IE", {
   style: "currency",
   currency: "EUR",
-  minimumFractionDigits: 2
+  minimumFractionDigits: 2,
 });
 const dalasi = new Intl.NumberFormat("en-GM", {
   style: "currency",
   currency: "GMD",
-  minimumFractionDigits: 2
+  minimumFractionDigits: 2,
 });
 
 export const fmtEUR = (v) => euro.format(Number(v || 0));
@@ -171,7 +218,7 @@ export function toDDMMYYYY(d) {
 }
 
 /* ---------------- DOM helpers ---------------- */
-export const $  = (s) => document.querySelector(s);
+export const $ = (s) => document.querySelector(s);
 export const $$ = (s) => Array.from(document.querySelectorAll(s));
 export const text = (s, v) => {
   const el = $(s);
@@ -181,22 +228,68 @@ export const text = (s, v) => {
 /* ---------------- Member resolving ---------------- */
 export const norm = (v = "") => String(v || "").trim();
 
+/**
+ * Make sure member objects have a consistent shape.
+ */
+export function normalizeMember(m = {}) {
+  if (!m || typeof m !== "object") return {};
+
+  return {
+    ...m,
+    _id: m._id || m.id || null,
+    memberId: m.memberId || "",
+    name: m.name || "",
+    email: (m.email || "").toLowerCase(),
+    phone: m.phone || m.contact || "",
+    country: m.country || "",
+    role: m.role || "member",
+    contributionPlan: m.contributionPlan || "",
+    status: m.status || "Active",
+    memberSince: m.memberSince || m.joined || null,
+  };
+}
+
 export async function resolveMemberByIdentifier(identifier = "") {
   const id = norm(identifier);
   if (!id) return null;
 
-  try {
-    const one = await api.get(`/members/${encodeURIComponent(id)}`);
-    if (one && (one._id || one.memberId || one.email)) return one;
-  } catch {}
+  const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
 
+  // 1) If looks like ObjectId -> /members/:id
+  if (isObjectId) {
+    try {
+      const one = await api.get(`/members/${id}`);
+      if (one && (one._id || one.memberId || one.email)) {
+        return normalizeMember(one);
+      }
+    } catch (err) {
+      console.warn("[NKD] resolveMemberByIdentifier ObjectId fetch failed", err);
+    }
+  }
+
+  // 2) NKD code or email → /members?memberId=... first
+  if (/^NKD\d+$/i.test(id)) {
+    try {
+      const res = await api.get(`/members?memberId=${encodeURIComponent(id)}`);
+      const list = Array.isArray(res) ? res : res.items || [];
+      if (list[0]) return normalizeMember(list[0]);
+    } catch (err) {
+      console.warn("[NKD] resolveMemberByIdentifier ?memberId fetch failed", err);
+    }
+  }
+
+  // 3) Fallback: list + match by memberId or email
   const list = await api.getMembers().catch(() => []);
   const needle = id.toLowerCase();
 
-  return list.find(m =>
-    (m?.memberId && String(m.memberId).toLowerCase() === needle) ||
-    (m?.email    && String(m.email).toLowerCase()    === needle)
-  ) || null;
+  const found =
+    list.find(
+      (m) =>
+        (m?.memberId && String(m.memberId).toLowerCase() === needle) ||
+        (m?.email && String(m.email).toLowerCase() === needle)
+    ) || null;
+
+  return found ? normalizeMember(found) : null;
 }
 
 /* ---------------- Offline role guess ---------------- */
@@ -211,8 +304,8 @@ export function offlineRoleFromEmail(email = "") {
 
   if (e.includes("secretary")) return "secretary";
   if (e.includes("financial")) return "financial";
-  if (e.includes("project"))   return "project-manager";
-  if (e.includes("viewer"))    return "viewer";
+  if (e.includes("project")) return "project-manager";
+  if (e.includes("viewer")) return "viewer";
 
   return "member";
 }

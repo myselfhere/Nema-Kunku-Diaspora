@@ -1,75 +1,135 @@
 // Frontend/js/member-settings.js
-import { api, getUser, setUser, resolveMemberByIdentifier, text, $ } from "./nkd-bus.js";
+// Member "My Settings" page: account info + change password
 
-async function loadMe() {
-  let u = getUser();
+import {
+  api,
+  getUser,
+  requireRole,
+  toYYYYMMDD,
+  $,
+  text,
+} from "./nkd-bus.js";
 
-  // Try recover from URL (?id=NKD002) or by email if cache is partial
-  if (!u) {
-    const urlId = new URLSearchParams(location.search).get("id");
-    if (urlId) u = await resolveMemberByIdentifier(urlId);
-  } else if (!u.memberId && u.email) {
-    const found = await resolveMemberByIdentifier(u.email);
-    if (found) u = found;
-  }
+// Only logged-in members can be here
+requireRole([]); // just ensure logged in; any role is allowed
 
+document.addEventListener("DOMContentLoaded", init);
+
+function init() {
+  const u = getUser();
   if (!u) return;
 
-  // Re-save a full record for other pages
-  setUser(u);
+  console.log("[Member Settings] init for", u.memberId || u.email);
 
-  text("#msMemberId", u.memberId || "—");
-  text("#msName", u.name || "—");
-  text("#msEmail", u.email || "—");
-  text("#msPlan", u.contributionPlan || u.plan || "—");
+  // ---- account info fields (top section) ----
+  const idEl = $("#acct_memberId");
+  const nameEl = $("#acct_name");
+  const emailEl = $("#acct_email");
+  const planEl = $("#acct_plan");
+  const sinceEl = $("#acct_since");
+  const statusEl = $("#acct_status");
 
-  const pill = document.querySelector("[data-user-slot]");
-  if (pill) pill.textContent = `${u.name || u.memberId || "Member"} • ${(u.role || "member")}`;
-}
+  if (idEl) idEl.value = u.memberId || "";
+  if (nameEl) nameEl.value = u.name || "";
+  if (emailEl) emailEl.value = u.email || "";
+  if (planEl) planEl.value = u.contributionPlan || "";
+  if (sinceEl) sinceEl.value = u.memberSince ? toYYYYMMDD(u.memberSince) : "";
+  if (statusEl) statusEl.value = u.status || "Active";
 
-function val(id){ const el = document.querySelector(id); return el ? el.value.trim() : ""; }
+  // Also refresh from API using memberId for freshest data
+  if (u.memberId) {
+    api
+      .get(`/members?memberId=${encodeURIComponent(u.memberId)}`)
+      .then((raw) => {
+        const item = Array.isArray(raw?.items) ? raw.items[0] : null;
+        if (!item) return;
+        console.log("[Member Settings] refreshed member from API", item);
 
-async function bindPasswordChange(){
-  const btn = $("#savePwBtn");
-  if (!btn) return;
-  btn.addEventListener("click", async () => {
-    const curr = val("#currPw");
-    const next = val("#newPw");
-    const conf = val("#confirmPw");
-    const msg = $("#msMsg");
+        if (idEl) idEl.value = item.memberId || "";
+        if (nameEl) nameEl.value = item.name || "";
+        if (emailEl) emailEl.value = item.email || "";
+        if (planEl) planEl.value = item.contributionPlan || "";
+        if (sinceEl)
+          sinceEl.value = item.memberSince
+            ? toYYYYMMDD(item.memberSince)
+            : "";
+        if (statusEl) statusEl.value = item.status || "Active";
+      })
+      .catch((err) => console.warn("[Member Settings] refresh failed", err));
+  }
 
-    msg.textContent = ""; msg.style.color = "";
+  // ---- change password section ----
+  const curEl = $("#pwd_current") || $("#currentPassword");
+  const newEl = $("#pwd_new") || $("#newPassword");
+  const cfmEl = $("#pwd_confirm") || $("#confirmPassword");
+  const msgEl = $("#pwd_msg") || $("#passwordMsg");
+  const btn = $("#pwd_saveBtn") || $("#savePasswordBtn");
+  const form = $("#pwd_form") || $("#passwordForm");
 
-    if (!next || !conf) return (msg.textContent = "Please enter and confirm your new password.");
-    if (next !== conf) return (msg.textContent = "Passwords do not match.");
-    if (next.length < 8) return (msg.textContent = "Password must be at least 8 characters long.");
+  function showMsg(msg, ok = false) {
+    if (!msgEl) {
+      alert(msg);
+      return;
+    }
+    msgEl.textContent = msg;
+    msgEl.style.color = ok ? "#1b5e20" : "#b00020";
+  }
 
-    const me = getUser();
-    if (!me) return (msg.textContent = "Please log in again.");
+  async function handleChangePassword(ev) {
+    if (ev) ev.preventDefault();
+    if (!curEl || !newEl || !cfmEl) return;
+
+    const currentPassword = curEl.value.trim();
+    const newPassword = newEl.value.trim();
+    const confirm = cfmEl.value.trim();
+
+    if (!currentPassword || !newPassword) {
+      showMsg("Please enter current and new password.");
+      return;
+    }
+    if (newPassword.length < 8) {
+      showMsg("New password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirm) {
+      showMsg("New password and confirmation do not match.");
+      return;
+    }
+
+    const userNow = getUser();
+    if (!userNow) {
+      showMsg("You are not logged in.", false);
+      return;
+    }
+
+    // 🔑 THIS is the important part:
+    // send identifier + currentPassword + newPassword
+    const identifier = userNow.email || userNow.memberId;
+    if (!identifier) {
+      showMsg("Missing member identifier (email or ID).", false);
+      return;
+    }
+
+    const body = { identifier, currentPassword, newPassword };
+
+    console.log("[Member Settings] change-password payload", {
+      identifier,
+    });
 
     try {
-      const res = await api.post("/auth/change-password", {
-        identifier: me.memberId || me.email,
-        currentPassword: curr,
-        newPassword: next,
-      });
-      if (res.ok) {
-        msg.textContent = "✅ Password updated successfully!";
-        msg.style.color = "green";
-        ["currPw","newPw","confirmPw"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
-      } else {
-        msg.textContent = `⚠️ ${res.error || "Password update failed"}`;
-        msg.style.color = "red";
-      }
-    } catch (e) {
-      msg.textContent = `❌ ${e.message}`;
-      msg.style.color = "red";
-      console.error(e);
+      await api.post("/auth/change-password", body);
+      showMsg("Password updated successfully ✔", true);
+      curEl.value = "";
+      newEl.value = "";
+      cfmEl.value = "";
+    } catch (err) {
+      console.error("[Member Settings] change-password failed", err);
+      showMsg(
+        "Could not update password. Check your current password and try again."
+      );
     }
-  });
-}
+  }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  await loadMe();
-  await bindPasswordChange();
-});
+  if (form) form.addEventListener("submit", handleChangePassword);
+  if (btn && !form) btn.addEventListener("click", handleChangePassword);
+}

@@ -45,7 +45,7 @@
         <div class="form-group">
           <label for="apiBase">API Base URL <span class="required">required</span></label>
           <input id="apiBase" placeholder="http://localhost:5001/api" />
-          <div class="form-hint">Your backend base URL will be saved locally.</div>
+          <div class="form-hint">Your backend base URL will be saved locally in this browser.</div>
           <div class="row gap mt">
             <button id="saveApi" class="btn btn-primary">Save API Base</button>
             <span id="apiMsg" class="muted"></span>
@@ -86,15 +86,23 @@
   <script type="module">
     import { getUser, clearUser, setApiBase, getApiBase } from "./js/nkd-bus.js";
 
+    console.log("[Admin Settings] script loaded");
+
     // Mobile nav toggle
     const btn = document.querySelector(".menu-toggle");
     const nav = document.getElementById("adminNav");
-    if (btn && nav) btn.addEventListener("click", () => nav.classList.toggle("active"));
+    if (btn && nav) {
+      btn.addEventListener("click", () => nav.classList.toggle("active"));
+    }
 
     // Current user display
     const u = getUser();
     const userSlot = document.querySelector("[data-user-slot]");
-    if (userSlot) userSlot.textContent = \`\${u?.name || 'Admin'} • \${u?.role || 'admin'}\`;
+    if (userSlot) {
+      const name = (u && (u.name || u.memberId || u.email)) || "Admin";
+      const role = (u && u.role) || "admin";
+      userSlot.textContent = name + " • " + role;
+    }
 
     // Elements
     const apiBaseEl = document.getElementById("apiBase");
@@ -107,50 +115,80 @@
     const resetFx = document.getElementById("resetFx");
     const logoutTop = document.getElementById("logoutTop");
 
-    // Initialize
-    apiBaseEl.value = getApiBase() || "http://localhost:5001/api";
+    // Initialise API field
+    if (apiBaseEl) {
+      apiBaseEl.value = getApiBase() || "http://localhost:5001/api";
+    }
 
-    const storedFx = JSON.parse(localStorage.getItem("nkd_fx") || "{}");
-    fxEurGmd.value = storedFx.eur_gmd || "";
-    fxGmdEur.value = storedFx.gmd_eur || "";
+    // Initialise FX fields
+    const storedFxRaw = localStorage.getItem("nkd_fx") || "{}";
+    let storedFx = {};
+    try { storedFx = JSON.parse(storedFxRaw); } catch (e) { storedFx = {}; }
+
+    if (fxEurGmd) fxEurGmd.value = storedFx.eur_gmd || "";
+    if (fxGmdEur) fxGmdEur.value = storedFx.gmd_eur || "";
 
     // Auto calculate inverse
-    fxEurGmd.addEventListener("input", () => {
-      const v = Number(fxEurGmd.value);
-      if (v > 0) fxGmdEur.value = (1 / v).toFixed(6);
-    });
+    if (fxEurGmd && fxGmdEur) {
+      fxEurGmd.addEventListener("input", () => {
+        const v = Number(fxEurGmd.value);
+        if (v > 0) {
+          fxGmdEur.value = (1 / v).toFixed(6);
+        } else {
+          fxGmdEur.value = "";
+        }
+      });
+    }
 
     // Save API
-    saveApi.addEventListener("click", () => {
-      const base = apiBaseEl.value.trim();
-      if (!base) { apiMsg.textContent = "Please enter API base."; return; }
-      setApiBase(base);
-      apiMsg.textContent = "API Base saved ✔";
-    });
+    if (saveApi && apiBaseEl && apiMsg) {
+      saveApi.addEventListener("click", () => {
+        console.log("[Admin Settings] Save API clicked");
+        const base = apiBaseEl.value.trim();
+        if (!base) {
+          apiMsg.textContent = "Please enter API base URL.";
+          return;
+        }
+        setApiBase(base);
+        apiMsg.textContent = "API Base saved ✔";
+        setTimeout(() => { apiMsg.textContent = ""; }, 3000);
+      });
+    }
 
     // Save FX
-    saveFx.addEventListener("click", () => {
-      const eur = Number(fxEurGmd.value);
-      const gmd = Number(fxGmdEur.value);
-      if (!eur || !gmd) { fxMsg.textContent = "Enter valid FX rates."; return; }
-      localStorage.setItem("nkd_fx", JSON.stringify({ eur_gmd: eur, gmd_eur: gmd }));
-      fxMsg.textContent = "FX saved ✔";
-    });
+    if (saveFx && fxEurGmd && fxGmdEur && fxMsg) {
+      saveFx.addEventListener("click", () => {
+        const eur = Number(fxEurGmd.value);
+        const gmd = Number(fxGmdEur.value);
+        if (!eur || !gmd) {
+          fxMsg.textContent = "Enter valid FX rates first.";
+          return;
+        }
+        localStorage.setItem("nkd_fx", JSON.stringify({ eur_gmd: eur, gmd_eur: gmd }));
+        fxMsg.textContent = "FX rates saved ✔";
+        setTimeout(() => { fxMsg.textContent = ""; }, 3000);
+      });
+    }
 
     // Reset FX
-    resetFx.addEventListener("click", () => {
-      localStorage.removeItem("nkd_fx");
-      fxEurGmd.value = "";
-      fxGmdEur.value = "";
-      fxMsg.textContent = "FX cleared.";
-    });
+    if (resetFx && fxEurGmd && fxGmdEur && fxMsg) {
+      resetFx.addEventListener("click", () => {
+        localStorage.removeItem("nkd_fx");
+        fxEurGmd.value = "";
+        fxGmdEur.value = "";
+        fxMsg.textContent = "FX cleared.";
+        setTimeout(() => { fxMsg.textContent = ""; }, 3000);
+      });
+    }
 
     // Logout
-    logoutTop.addEventListener("click", e => {
-      e.preventDefault();
-      clearUser();
-      window.location.href = "login.html";
-    });
+    if (logoutTop) {
+      logoutTop.addEventListener("click", (e) => {
+        e.preventDefault();
+        clearUser();
+        window.location.href = "login.html";
+      });
+    }
   </script>
 </body>
 </html>

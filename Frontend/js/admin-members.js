@@ -3,6 +3,8 @@
 
 import { api, $, $$, getUser, requireRole, go } from "./nkd-bus.js";
 
+console.log("[Admin Members] script loaded");
+
 requireRole(["admin", "president", "financial", "project-manager", "secretary"]); // allowed staff
 
 const LS_MEM = "nkd_members_cache"; // fallback cache (when API missing)
@@ -76,11 +78,14 @@ function toast(msg, ok = false) {
 
 // ---------- fetch members (API then cache) ----------
 async function fetchMembers() {
+  console.log("[Admin Members] fetchMembers() starting...");
   try {
-    const list = await api.getMembers(); // returns [] or {items:[]}
+    const list = await api.getMembers(); // returns [] or items[]
     state.all = Array.isArray(list) ? list : list.items || [];
+    console.log("[Admin Members] API members:", state.all);
     saveCache(state.all);
-  } catch {
+  } catch (err) {
+    console.error("[Members] API failed, using cache:", err);
     state.all = loadCache();
   }
   state.all.sort(by("memberId"));
@@ -138,17 +143,22 @@ function applyFilters() {
 
 // ---------- table ----------
 function paintTable() {
+  console.log("[Admin Members] paintTable()");
   const rows = applyFilters();
   const start = (state.page - 1) * state.perPage;
   const pageRows = rows.slice(start, start + state.perPage);
 
-  if (!el.tbody) return;
+  if (!el.tbody) {
+    console.warn("[Admin Members] tbody not found");
+    return;
+  }
 
   el.tbody.innerHTML = "";
   if (!pageRows.length) {
     el.tbody.innerHTML = `<tr><td colspan="10" class="muted">No members found.</td></tr>`;
   } else {
     for (const m of pageRows) {
+      const id = m._id || ""; // 🔑 always use _id for API
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${m.memberId || "—"}</td>
@@ -165,15 +175,9 @@ function paintTable() {
         <td>${m.status || "Active"}</td>
         <td class="num">
           <div class="row" style="gap:6px; justify-content:flex-end">
-            <button class="btn" data-view="${
-              m._id || m.memberId || m.email
-            }">View</button>
-            <button class="btn" data-edit="${
-              m._id || m.memberId || m.email
-            }">Edit</button>
-            <button class="btn" data-del="${
-              m._id || m.memberId || m.email
-            }" style="background:#ffe9e9;color:#b00020">Delete</button>
+            <button class="btn" data-view="${id}">View</button>
+            <button class="btn" data-edit="${id}">Edit</button>
+            <button class="btn" data-del="${id}" style="background:#ffe9e9;color:#b00020">Delete</button>
           </div>
         </td>
       `;
@@ -203,10 +207,7 @@ function onView(e) {
 // ---------- edit ----------
 function onEditOpen(e) {
   const id = e.currentTarget.getAttribute("data-edit");
-  const m =
-    state.all.find(
-      (x) => x._id === id || x.memberId === id || x.email === id
-    ) || {};
+  const m = state.all.find((x) => String(x._id) === String(id)) || {};
   state.editing = m;
   el.editTitle.textContent =
     m._id || m.memberId ? "Edit Member" : "Add Member";
@@ -247,23 +248,13 @@ el.editForm?.addEventListener("submit", async (ev) => {
   };
 
   try {
-    const hasId =
-      !!state.editing &&
-      (!!state.editing._id ||
-        !!state.editing.memberId ||
-        !!state.editing.email);
+    const hasId = !!state.editing && !!state.editing._id;
     if (hasId) {
-      const key =
-        state.editing._id || state.editing.memberId || state.editing.email;
-      // Try API, then fallback mutate cache
+      const key = state.editing._id; // 🔑 backend expects _id in /:id
       try {
         await api.put(`/members/${encodeURIComponent(key)}`, payload);
       } catch {
-        // cache fallback
-        const i = state.all.findIndex(
-          (x) =>
-            x._id === key || x.memberId === key || x.email === key
-        );
+        const i = state.all.findIndex((x) => String(x._id) === String(key));
         if (i >= 0) state.all[i] = { ...state.all[i], ...payload };
         saveCache(state.all);
       }
@@ -299,9 +290,7 @@ $$("[data-close]").forEach((b) =>
 // ---------- delete ----------
 function onDeleteOpen(e) {
   const id = e.currentTarget.getAttribute("data-del");
-  const m = state.all.find(
-    (x) => x._id === id || x.memberId === id || x.email === id
-  );
+  const m = state.all.find((x) => String(x._id) === String(id));
   if (!m) return;
   state.deleting = m;
   el.deleteText.textContent = `Delete ${
@@ -313,20 +302,12 @@ function onDeleteOpen(e) {
 el.confirmDeleteBtn?.addEventListener("click", async () => {
   const m = state.deleting;
   if (!m) return;
-  const key = m._id || m.memberId || m.email;
+  const key = m._id; // 🔑 always _id
   try {
     try {
       await api.del(`/members/${encodeURIComponent(key)}`);
     } catch {
-      // cache fallback
-      state.all = state.all.filter(
-        (x) =>
-          !(
-            x._id === key ||
-            x.memberId === key ||
-            x.email === key
-          )
-      );
+      state.all = state.all.filter((x) => String(x._id) !== String(key));
       saveCache(state.all);
     }
     hide(el.deleteModal);
@@ -405,4 +386,9 @@ el.exportBtn?.addEventListener("click", () => {
 });
 
 // ---------- init ----------
-document.addEventListener("DOMContentLoaded", fetchMembers);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", fetchMembers);
+} else {
+  // DOM already ready (script at bottom) → just run
+  fetchMembers();
+}

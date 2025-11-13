@@ -1,65 +1,107 @@
-// admin-settings.js — Nema Kunku Diaspora System Settings
-(() => {
-  const $ = (s) => document.querySelector(s);
-  const toast = (msg, type="ok") => {
-    const el = $("#toast");
-    if (!el) return;
-    el.textContent = msg;
-    el.className = "toast" + (type === "error" ? " error" : "");
-    el.style.display = "block";
-    setTimeout(() => (el.style.display = "none"), 2500);
-  };
+// Frontend/js/admin-settings.js
+// Admin Settings: connect to NKD backend + store FX rate
 
-  const DEFAULT_RATE = 75;
+import { getApiBase, setApiBase, activeNav } from "./nkd-bus.js";
 
-  async function loadRate() {
-    try {
-      // Try backend config
-      const r = await fetch("/api/config");
-      if (r.ok) {
-        const j = await r.json();
-        if (j?.eurToGmd) return Number(j.eurToGmd);
+const FX_KEY = "nkd_fx_eur_to_gmd";
+
+function loadFx() {
+  try {
+    const v = localStorage.getItem(FX_KEY);
+    return v ? Number(v) : "";
+  } catch {
+    return "";
+  }
+}
+
+function saveFx(rate) {
+  localStorage.setItem(FX_KEY, String(rate));
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Highlight Settings in nav
+  activeNav("settings");
+
+  const apiInput   = document.getElementById("apiBaseInput");
+  const apiBtn     = document.getElementById("saveApiBaseBtn");
+  const apiStatus  = document.getElementById("apiBaseStatus");
+
+  const fxInput    = document.getElementById("eurToGmdInput");
+  const fxSaveBtn  = document.getElementById("saveFxBtn");
+  const fxResetBtn = document.getElementById("resetFxBtn");
+  const fxStatus   = document.getElementById("fxStatus");
+
+  // --- API BASE: load current value into input ---
+  if (apiInput) {
+    const currentBase = getApiBase();
+    if (currentBase) apiInput.value = currentBase;
+  }
+
+  if (apiBtn && apiInput) {
+    apiBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      const url = (apiInput.value || "").trim();
+      if (!url) {
+        alert("Please enter an API base URL first.");
+        return;
       }
-    } catch {}
-    // Try localStorage
-    const stored = Number(localStorage.getItem("eurToGmd"));
-    if (!isNaN(stored) && stored > 0) return stored;
-    return DEFAULT_RATE;
+
+      // Very light validation
+      if (!/^https?:\/\//i.test(url)) {
+        if (!confirm("URL does not start with http/https. Save anyway?")) {
+          return;
+        }
+      }
+
+      setApiBase(url);
+
+      console.log("[NKD] Saved API base:", url);
+      if (apiStatus) {
+        apiStatus.textContent = "API base URL saved ✅";
+        apiStatus.className = "status-text ok";
+      } else {
+        alert("API base URL saved ✅");
+      }
+    });
   }
 
-  async function saveRate(rate) {
-    try {
-      await fetch("/api/config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eurToGmd: rate }),
-      });
-    } catch {
-      // Fallback: store locally
-      localStorage.setItem("eurToGmd", String(rate));
-    }
+  // --- FX RATE: load saved rate ---
+  if (fxInput) {
+    const r = loadFx();
+    if (r) fxInput.value = r;
   }
 
-  // ---- UI actions ----
-  $("#saveBtn").addEventListener("click", async () => {
-    const val = Number($("#eurToGmd").value);
-    if (isNaN(val) || val <= 0) {
-      toast("Please enter a valid rate.", "error");
-      return;
-    }
-    await saveRate(val);
-    toast(`Saved! €1 = D${val}`);
-  });
+  if (fxSaveBtn && fxInput) {
+    fxSaveBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const val = Number(fxInput.value);
+      if (!val || val <= 0) {
+        alert("Please enter a valid EUR → GMD rate (number greater than 0).");
+        return;
+      }
+      saveFx(val);
+      console.log("[NKD] Saved FX rate EUR→GMD:", val);
+      if (fxStatus) {
+        fxStatus.textContent = "FX rate saved ✅";
+        fxStatus.className = "status-text ok";
+      } else {
+        alert("FX rate saved ✅");
+      }
+    });
+  }
 
-  $("#resetBtn").addEventListener("click", async () => {
-    $("#eurToGmd").value = DEFAULT_RATE;
-    await saveRate(DEFAULT_RATE);
-    toast(`Reset to default: €1 = D${DEFAULT_RATE}`);
-  });
-
-  // ---- Init ----
-  (async () => {
-    const rate = await loadRate();
-    $("#eurToGmd").value = rate;
-  })();
-})();
+  if (fxResetBtn && fxInput) {
+    fxResetBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      fxInput.value = "";
+      localStorage.removeItem(FX_KEY);
+      if (fxStatus) {
+        fxStatus.textContent = "FX rate cleared.";
+        fxStatus.className = "status-text";
+      } else {
+        alert("FX rate cleared.");
+      }
+    });
+  }
+});
