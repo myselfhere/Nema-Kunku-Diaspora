@@ -35,6 +35,8 @@
       transition: background .2s ease;
     }
     .btn.primary:hover { background: #2e5f1a; }
+
+    #msg { margin-top: 10px; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -57,13 +59,17 @@
     <section class="login-section">
       <div class="login-card">
         <h2>Member Login</h2>
+        <p>Use your <strong>email or Member ID</strong>.<br>
+           Password: <code>NKD0xx-2025</code> (e.g. <code>NKD003-2025</code>).</p>
 
         <form id="loginForm" class="login-form">
           <label for="email"></label>
-          <input id="email" type="text" placeholder="Enter your email or Member ID" required />
+          <input id="email" type="text"
+                 placeholder="Enter your email or Member ID" required />
 
           <label for="password">Password</label>
-          <input id="password" type="password" placeholder="Enter your password" required />
+          <input id="password" type="password"
+                 placeholder="Enter your password" required />
 
           <button type="button" id="loginBtn" class="btn primary">Login</button>
         </form>
@@ -105,32 +111,56 @@
       const ident = clean(emailEl.value);
       const pw    = clean(passEl.value);
 
-      if (!ident || !pw) return showMsg("Please enter both email/Member ID and password.");
-      if (pw !== "Password1") return showMsg("Wrong email or password.");
+      if (!ident || !pw) {
+        return showMsg("Please enter both email/Member ID and password.");
+      }
 
       let profile = null;
-      try { profile = await resolveMemberByIdentifier(ident); } catch {}
+      try {
+        profile = await resolveMemberByIdentifier(ident);
+      } catch (e) {
+        console.warn("[Login] resolve error", e);
+      }
 
-      // Build the user object either from API profile or from offline guess
+      // figure out member code (NKD0xx)
+      let memberCode = null;
+      if (profile?.memberId) {
+        memberCode = String(profile.memberId).toUpperCase().trim();
+      } else if (/^nkd\d+/i.test(ident)) {
+        memberCode = ident.toUpperCase().trim();
+      }
+
+      const expectedPw = memberCode ? `${memberCode}-2025` : "Password1";
+
+      if (pw !== expectedPw) {
+        return showMsg("Wrong email / Member ID or password.");
+      }
+
+      // Build session user
       let role, name, email, memberId, id;
       if (profile) {
         id       = profile._id || profile.memberId || profile.email || ident;
         email    = profile.email || (ident.includes("@") ? ident : "");
-        memberId = profile.memberId || null;
+        memberId = profile.memberId || memberCode || null;
         name     = profile.name || profile.fullName || profile.memberId || ident;
         role     = (profile.role || "").toLowerCase();
-        // If role missing on record, fallback to offline rule based on identifier
         if (!role) role = offlineRoleFromEmail(memberId || email || ident);
       } else {
-        // Offline fallback
         id       = ident;
         email    = ident.includes("@") ? ident : "";
-        memberId = ident.match(/^nkd\d+/i) ? ident.toUpperCase() : null;
+        memberId = memberCode;
         name     = ident.includes("@") ? ident.split("@")[0] : (memberId || ident);
         role     = offlineRoleFromEmail(ident);
       }
 
-      const user = { id, memberId, email, name, role, mustChangePassword: false };
+      const user = {
+        id,
+        memberId,
+        email,
+        name,
+        role,
+        mustChangePassword: false
+      };
 
       try {
         setUser(user);
@@ -143,7 +173,9 @@
     }
 
     btn.addEventListener("click", doLogin);
-    document.addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doLogin();
+    });
   </script>
 </body>
 </html>
