@@ -132,7 +132,7 @@ body{
 .table-mini td{padding:10px;border-bottom:1px solid var(--line)}
 .table-mini tbody tr:nth-child(even){background:#fafdfb}
 
-/* Buttons (green only) */
+/* Buttons */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;
   gap:8px;border:0;border-radius:12px;padding:11px 16px;
@@ -175,14 +175,14 @@ input:focus,select:focus,textarea:focus{
 }
 .admin-footer strong{font-weight:900}
 
-/* ============ Member/Admin shared small polish ============ */
+/* Member/Admin shared small polish */
 .stat-big{font-size:28px;font-weight:800}
 .pill{
   background:#eef9ee;color:#1e411e;padding:6px 10px;
   border-radius:999px;font-weight:800;display:inline-block;
 }
 
-/* ============ Responsive ============ */
+/* Responsive */
 @media (max-width: 1024px){
   .content-grid{gap:14px}
 }
@@ -203,13 +203,34 @@ input:focus,select:focus,textarea:focus{
   .page-title{font-size:24px}
 }
 
-/* ============ Optional: Attendance & Drawers ============ */
+/* Tables */
 .table{width:100%;border-collapse:separate;border-spacing:0;background:#fff}
 .table thead th{position:sticky;top:0;background:#f5fbf6;z-index:1;text-align:left;padding:12px;font-weight:700;color:#2f3a2f}
 .table tbody td{padding:12px;border-top:1px solid #eef3ee}
 .table tbody tr:nth-child(even){background:#fafdfb}
 
+/* Drawer */
 .drawer{position:fixed;inset:0;background:rgba(0,0,0,.28);display:none}
 .drawer.open{display:block}
 .drawer-inner{position:absolute;right:0;top:0;height:100%;width:min(560px, 100%);background:#f7fbf8;padding:16px;overflow:auto;box-shadow:-12px 0 24px rgba(0,0,0,.12)}
 .drawer-close{border:none;background:#eaf3ec;color:var(--green-800);font-size:22px;line-height:1;width:36px;height:36px;border-radius:8px}
+
+/* ==========================================================
+   ⭐ NEW FIX — Center cards & KPI blocks on mobile
+   ========================================================== */
+@media (max-width: 640px){
+  .stats-grid,
+  .card,
+  .content-grid,
+  .grid-4,
+  .grid-3,
+  .grid-2 {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .stat-card,
+  .card {
+    width: 95% !important;
+  }
+}
