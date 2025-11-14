@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Financial Dashboard — Nema Kunku Diaspora</title>
+  <link rel="stylesheet" href="admin-style.css"/>
+  <style>
+    .stats-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:16px;
+      margin-bottom:18px;
+    }
+    .stat-card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px 16px;
+    }
+    .stat-label{font-weight:800;color:#2f3a2f}
+    .stat-value{font-size:28px;font-weight:900;color:var(--green-900);margin-top:4px}
+    .stat-sub{color:var(--muted);font-size:12px}
+    .grid-two{
+      display:grid;
+      grid-template-columns:2fr 1.2fr;
+      gap:16px;
+    }
+    @media (max-width:1024px){
+      .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .grid-two{grid-template-columns:1fr}
+    }
+    @media (max-width:640px){
+      .stats-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <header class="admin-topbar">
+    <div class="container row">
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+
+      <nav class="admin-nav" id="adminNav">
+        <a href="financial-dashboard.html" data-key="dashboard">Dashboard</a>
+        <a href="admin-members.html" data-key="members">Members</a>
+        <a href="admin-contributions.html" data-key="contributions">Contributions</a>
+        <a href="admin-expenditures.html" data-key="expenditures">Expenditures</a>
+        <a href="admin-settings.html" data-key="settings">Settings</a>
+      </nav>
+
+      <div class="admin-user">
+        <span data-user-slot>Financial Secretary • financial</span>
+        <a href="#" id="logoutLink">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="admin-shell">
+    <div class="container">
+      <h1 class="page-title">Financial Dashboard</h1>
+
+      <!-- Quick Actions -->
+      <section class="card" style="margin-bottom:16px">
+        <div class="card-header">Quick Actions</div>
+        <div class="card-body" style="display:flex;flex-wrap:wrap;gap:10px">
+          <a class="btn btn-primary" href="admin-contributions.html">Record Contribution</a>
+          <a class="btn btn-secondary" href="admin-expenditures.html">Record Expenditure</a>
+          <a class="btn btn-light" href="admin-members.html">View Members</a>
+        </div>
+      </section>
+
+      <!-- KPIs -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Income (EUR) — YTD</div>
+          <div class="stat-value" id="kpiIncEUR">€0.00</div>
+          <div class="stat-sub">Contributions in EUR this year</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Income (GMD) — YTD</div>
+          <div class="stat-value" id="kpiIncGMD">D0.00</div>
+          <div class="stat-sub">Contributions in GMD this year</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Expenses — YTD</div>
+          <div class="stat-value" id="kpiExp">€0.00 / D0.00</div>
+          <div class="stat-sub">All expenditure categories</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Net Position — YTD</div>
+          <div class="stat-value" id="kpiNet">€0.00 / D0.00</div>
+          <div class="stat-sub">Income − Expenses</div>
+        </div>
+      </section>
+
+      <!-- Tables -->
+      <section class="grid-two">
+        <!-- Contributions -->
+        <section class="card">
+          <div class="card-header">Recent Contributions</div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="table-mini">
+                <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Receipt</th>
+                  <th>Member</th>
+                  <th class="right">EUR</th>
+                  <th class="right">GMD</th>
+                  <th>Method</th>
+                </tr>
+                </thead>
+                <tbody id="tblContribBody">
+                  <tr><td colspan="6" class="muted">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Expenditures -->
+        <section class="card">
+          <div class="card-header">Recent Expenditures</div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="table-mini">
+                <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Ref</th>
+                  <th>Payee</th>
+                  <th>Category</th>
+                  <th class="right">EUR</th>
+                  <th class="right">GMD</th>
+                </tr>
+                </thead>
+                <tbody id="tblExpBody">
+                  <tr><td colspan="6" class="muted">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <footer class="admin-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+  </footer>
+
+  <!-- PAGE LOGIC -->
+  <script type="module" src="js/financial-dashboard.js"></script>
+</body>
+</html>
