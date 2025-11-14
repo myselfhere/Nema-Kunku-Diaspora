@@ -20,7 +20,7 @@ function load(key, d = null) {
 }
 
 /* ---------------- API Base ---------------- */
-// ⬇️ IMPORTANT: use Render URL now, NOT localhost
+// Render server API base
 const DEFAULT_API = "https://nema-kunku-diaspora.onrender.com/api";
 
 export function setApiBase(url) {
@@ -30,7 +30,6 @@ export function getApiBase() {
   return load(LS.api, DEFAULT_API);
 }
 
-// Log for sanity
 (() => console.log("[NKD] API base (saved):", getApiBase()))();
 
 /* ---------------- Tiny fetch client ---------------- */
@@ -92,58 +91,53 @@ export function clearUser() {
   localStorage.removeItem(LS.user);
 }
 
-/* Role ➜ default home page */
+/* ----------------------------------------------------
+   ROLE → HOME PAGE (UPDATED & CORRECTED)
+----------------------------------------------------- */
 export function roleHome(role = "member") {
   const r = (role || "").toLowerCase();
 
-  // President
-  if (r === "president") return "president-dashboard.html";
+  switch (r) {
+    case "admin":
+    case "president":
+      return "admin-dashboard.html";
 
-  // Admin
-  if (r === "admin") return "admin-dashboard.html";
+    case "financial":
+      return "financial-dashboard.html";
 
-  // Financial Secretary
-  if (r === "financial") return "financial-dashboard.html";
+    case "project-manager":
+      return "project-dashboard.html";
 
-  // Project Manager
-  if (r === "project-manager") return "project-dashboard.html";
+    case "secretary":
+      return "secretary-dashboard.html";
 
-  // Secretary
-  if (r === "secretary") return "secretary-dashboard.html";
+    case "viewer":
+      return "admin-members.html";
 
-  // Viewer – read-only admin list
-  if (r === "viewer") return "admin-members.html";
-
-  // Default: normal member
-  return "member-dashboard.html";
+    default:
+      return "member-dashboard.html";
+  }
 }
 
-/* Guard for restricted pages */
+/* ---------------- Guard for restricted pages ---------------- */
 export function requireRole(roles = []) {
   const u = getUser();
   if (!u) return go("login.html");
   if (!roles.length) return;
 
-  const ok = roles
-    .map((x) => x.toLowerCase())
-    .includes((u.role || "").toLowerCase());
+  const ok = roles.map(r => r.toLowerCase())
+                  .includes((u.role || "").toLowerCase());
 
   if (!ok) go(roleHome(u.role || "member"));
 }
 
-/* ---------------- Nav + routing ---------------- */
+/* ---------------- Navigation ---------------- */
 export function go(href) {
   if (!href) return;
-  // Avoid accidental double /Frontend/Frontend/
   const clean = href.replace(/\/Frontend\/Frontend\//g, "/Frontend/");
   location.href = clean;
 }
 
-/**
- * Highlight the active nav item and show the user in the header.
- * Usage: activeNav("dashboard") or activeNav("members")
- * It matches against link[data-key] if present, else link text (lowercased).
- */
 export function activeNav(key = "") {
   const want = String(key || "").toLowerCase();
   const links = Array.from(
@@ -151,11 +145,12 @@ export function activeNav(key = "") {
   );
 
   links.forEach((a) => {
-    const k = (a.dataset.key || a.textContent || "").trim().toLowerCase();
+    const k = (a.dataset.key || a.textContent || "")
+      .trim()
+      .toLowerCase();
     a.classList.toggle("active", want && k === want);
   });
 
-  // Fill user pill if available
   const u = getUser();
   const pill = document.querySelector("[data-user-slot]");
   if (pill && u) {
@@ -165,23 +160,20 @@ export function activeNav(key = "") {
   }
 }
 
-/* ---------------- Formatting helpers ---------------- */
+/* ---------------- Formatting ---------------- */
 const euro = new Intl.NumberFormat("en-IE", {
   style: "currency",
   currency: "EUR",
-  minimumFractionDigits: 2,
 });
 const dalasi = new Intl.NumberFormat("en-GM", {
   style: "currency",
   currency: "GMD",
-  minimumFractionDigits: 2,
 });
 
 export const fmtEUR = (v) => euro.format(Number(v || 0));
 export const fmtGMD = (v) => dalasi.format(Number(v || 0));
 
 export function toYYYYMMDD(d) {
-  if (!d) return "";
   const x = new Date(d);
   if (isNaN(x)) return "";
   const p = (n) => String(n).padStart(2, "0");
@@ -189,7 +181,6 @@ export function toYYYYMMDD(d) {
 }
 
 export function toDDMMYYYY(d) {
-  if (!d) return "";
   const x = new Date(d);
   if (isNaN(x)) return "";
   const p = (n) => String(n).padStart(2, "0");
@@ -204,13 +195,9 @@ export const text = (s, v) => {
   if (el) el.textContent = v;
 };
 
-/* ---------------- Member resolving ---------------- */
+/* ---------------- Member Normalisation ---------------- */
 export const norm = (v = "") => String(v || "").trim();
 
-/**
- * Normalise a member object into a consistent shape for dashboards.
- * This is what member-dashboard.js is importing as `normalizeMember`.
- */
 export function normalizeMember(raw = {}) {
   if (!raw) return null;
 
@@ -252,25 +239,22 @@ export async function resolveMemberByIdentifier(identifier = "") {
   const id = norm(identifier);
   if (!id) return null;
 
-  // 1) Try direct /members/:id (Mongo _id)
   try {
     const one = await api.get(`/members/${encodeURIComponent(id)}`);
     if (one && (one._id || one.memberId || one.email))
       return normalizeMember(one);
-  } catch {
-    // ignore – fall back to list scan
-  }
+  } catch {}
 
-  // 2) Fallback: scan member list by memberId/email
   const list = await api.getMembers().catch(() => []);
   const needle = id.toLowerCase();
 
   const found =
     list.find(
       (m) =>
-        (m?.memberId &&
+        (m.memberId &&
           String(m.memberId).toLowerCase() === needle) ||
-        (m?.email && String(m.email).toLowerCase() === needle)
+        (m.email &&
+          String(m.email).toLowerCase() === needle)
     ) || null;
 
   return found ? normalizeMember(found) : null;
@@ -280,12 +264,8 @@ export async function resolveMemberByIdentifier(identifier = "") {
 export function offlineRoleFromEmail(email = "") {
   const e = (email || "").toLowerCase();
 
-  // You (Salme) admin
-  if (e.includes("salme") || e === "nkd001") return "admin";
-
-  // President dashboard
+  if (e.includes("salme") || e.includes("nkd001")) return "admin";
   if (e.includes("president")) return "president";
-
   if (e.includes("secretary")) return "secretary";
   if (e.includes("financial")) return "financial";
   if (e.includes("project")) return "project-manager";
@@ -294,15 +274,10 @@ export function offlineRoleFromEmail(email = "") {
   return "member";
 }
 
-/* ---------------- Toast helper ---------------- */
-/**
- * Simple toast: shows a small message at the bottom of the screen.
- * Usage: toast("Member saved", "ok") or toast("Error", "error")
- */
+/* ---------------- Toast ---------------- */
 export function toast(message, type = "info") {
   if (!message) return;
 
-  // Re-use existing toast if present
   let box = document.getElementById("nkd-toast");
   if (!box) {
     box = document.createElement("div");
@@ -320,7 +295,7 @@ export function toast(message, type = "info") {
     box.style.boxShadow = "0 8px 20px rgba(0,0,0,.18)";
     box.style.zIndex = "9999";
     box.style.opacity = "0";
-    box.style.transition = "opacity .2s ease-out";
+    box.style.transition = "opacity .2s";
     document.body.appendChild(box);
   }
 
