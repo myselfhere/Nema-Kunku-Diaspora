@@ -5,25 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Member Dashboard — Nema Kunku Diaspora</title>
 
-  <!-- Use the portal/admin look & feel -->
+  <!-- Shared admin/member style -->
   <link rel="stylesheet" href="admin-style.css" />
 
   <style>
-    /* small tweaks so cards breathe nicely on member pages */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-    @media (max-width: 1100px){ .grid-4{ grid-template-columns: repeat(2,1fr);} }
-    @media (max-width: 640px){ .grid-4, .grid-2{ grid-template-columns: 1fr; } }
+
+    @media (max-width: 1100px){
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px){
+      .grid-4, .grid-2 { grid-template-columns: 1fr; }
+    }
 
     .stat-big { font-size: 32px; font-weight: 800; color: #1b5e20; }
     .mt-16 { margin-top: 16px; }
-    .right  { text-align: right; }
+    .right { text-align: right; }
     .center { text-align: center; }
     .sticky-header thead th { position: sticky; top: 0; z-index: 1; background: #f5fbf5; }
   </style>
 </head>
+
 <body>
-  <!-- ===== TOP NAV ===== -->
+
+  <!-- ===== TOP NAVBAR ===== -->
   <header class="admin-topbar">
     <div class="container row">
       <button class="menu-toggle" aria-label="Menu">☰</button>
@@ -34,32 +40,37 @@
         <a href="member-projects.html">Projects</a>
         <a href="member-settings.html">Settings</a>
       </nav>
+
       <div class="admin-user">
         <span data-user-slot>Member • member</span>
-        <a id="logoutLink" href="#">Logout</a>
+        <a id="logoutLink" href="#" style="cursor:pointer;">Logout</a>
       </div>
     </div>
   </header>
 
+  <!-- ===== PAGE CONTENT ===== -->
   <main class="admin-shell">
+
     <h1 class="page-title">Welcome</h1>
 
-    <!-- KPIs -->
+    <!-- STATS -->
     <section class="content-grid grid-4">
       <div class="card">
         <div class="card-header">Paid (EUR) — YTD</div>
         <div class="card-body">
           <div class="stat-big" id="kpiEUR">€0.00</div>
-          <div class="muted">Sum of contributions in EUR</div>
+          <div class="muted">Sum of EUR contributions</div>
         </div>
       </div>
+
       <div class="card">
         <div class="card-header">Paid (GMD) — YTD</div>
         <div class="card-body">
           <div class="stat-big" id="kpiGMD">D0.00</div>
-          <div class="muted">Sum of contributions in GMD</div>
+          <div class="muted">Sum of GMD contributions</div>
         </div>
       </div>
+
       <div class="card">
         <div class="card-header">Meetings Attended</div>
         <div class="card-body">
@@ -67,6 +78,7 @@
           <div class="muted"><span id="kpiMissed">0</span> missed</div>
         </div>
       </div>
+
       <div class="card">
         <div class="card-header">Arrears</div>
         <div class="card-body">
@@ -79,47 +91,43 @@
       </div>
     </section>
 
-    <!-- My Account -->
+    <!-- ACCOUNT BOX -->
     <section class="card mt-16">
       <div class="card-header">My Account</div>
       <div class="card-body">
-        <div><strong id="myAccountName">—</strong></div>
-        <div class="muted">Plan: <span id="myAccountPlan">—</span></div>
-        <div class="muted">ID: <span id="myAccountId">—</span></div>
+        <strong id="myAccountName">—</strong><br>
+        <span class="muted">Plan: <span id="myAccountPlan">—</span></span><br>
+        <span class="muted">ID: <span id="myAccountId">—</span></span>
       </div>
     </section>
 
-    <!-- Quick Links -->
+    <!-- QUICK LINKS -->
     <section class="card mt-16">
       <div class="card-header">Quick Links</div>
       <div class="card-body">
         <div class="row wrap" style="gap:12px">
-          <a class="btn btn-secondary" id="viewReceiptsLink" href="member-receipts.html">View Receipts</a>
-          <a class="btn btn-secondary" id="viewAttendanceLink" href="member-attendance.html">View Attendance</a>
+          <a class="btn btn-secondary" href="member-receipts.html">View Receipts</a>
+          <a class="btn btn-secondary" href="member-attendance.html">View Attendance</a>
           <a class="btn btn-secondary" href="member-settings.html#password">Change Password</a>
           <button class="btn btn-primary" id="downloadCsvBtn">Download Statement (CSV)</button>
         </div>
       </div>
     </section>
 
-    <!-- Recent Lists -->
+    <!-- Recent Contributions / Meetings -->
     <section class="grid-2 mt-16">
+
       <div class="card">
         <div class="card-header row between">
           <span>Recent Contributions</span>
-          <button class="btn btn-light" id="viewAllContribBtn">View All</button>
+          <a class="btn btn-light" href="member-contributions.html">View All</a>
         </div>
         <div class="card-body">
           <div class="table-wrap sticky-header">
             <table class="table-mini">
               <thead>
                 <tr>
-                  <th>Receipt</th>
-                  <th>Date</th>
-                  <th>Plan</th>
-                  <th>Method</th>
-                  <th>EUR</th>
-                  <th>GMD</th>
+                  <th>Receipt</th><th>Date</th><th>Plan</th><th>Method</th><th>EUR</th><th>GMD</th>
                 </tr>
               </thead>
               <tbody id="recentContribTbody">
@@ -133,18 +141,13 @@
       <div class="card">
         <div class="card-header row between">
           <span>Recent Meetings</span>
-          <button class="btn btn-light" id="viewAllMeetBtn">View All</button>
+          <a class="btn btn-light" href="member-attendance.html">View All</a>
         </div>
         <div class="card-body">
           <div class="table-wrap sticky-header">
             <table class="table-mini">
               <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Date</th>
-                  <th>Title / Notes</th>
-                  <th>Status</th>
-                </tr>
+                <tr><th>ID</th><th>Date</th><th>Title / Notes</th><th>Status</th></tr>
               </thead>
               <tbody id="recentMeetTbody">
                 <tr><td colspan="4" class="muted">Loading…</td></tr>
@@ -153,6 +156,7 @@
           </div>
         </div>
       </div>
+
     </section>
   </main>
 
@@ -160,45 +164,39 @@
     © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
   </footer>
 
-  <!-- Mini user pill + logout wiring -->
+  <!-- ===== USER + LOGOUT HANDLING ===== -->
   <script type="module">
-    import { getUser, setUser, go } from "./js/nkd-bus.js";
+    import { getUser } from "./js/nkd-bus.js";
 
-    // Fill the user pill from stored session
-    try {
-      const u = getUser();
+    // Fill profile name in navbar + account box
+    const u = getUser();
+    if (u) {
       const slot = document.querySelector("[data-user-slot]");
-      if (slot) {
-        const roleLabel = (u?.role || "member");
-        slot.textContent = `${u?.name || "Member"} • ${roleLabel}`;
-      }
-      // Also reflect basic info in "My Account" card if available
-      if (u) {
-        const idSpan   = document.getElementById("myAccountId");
-        const nameSpan = document.getElementById("myAccountName");
-        if (idSpan)   idSpan.textContent   = u.memberId || "—";
-        if (nameSpan) nameSpan.textContent = u.name     || "Member";
-      }
-    } catch (e) {
-      console.warn("[Member Dashboard] Could not read user", e);
+      if (slot) slot.textContent = `${u.name || "Member"} • ${u.role || "member"}`;
+
+      document.getElementById("myAccountId").textContent   = u.memberId ?? "—";
+      document.getElementById("myAccountName").textContent = u.name     ?? "Member";
+      document.getElementById("myAccountPlan").textContent = u.plan     ?? "—";
     }
 
     // Mobile menu toggle
-    const btn = document.querySelector(".menu-toggle");
-    const nav = document.getElementById("memberNav");
-    if (btn && nav) {
-      btn.addEventListener("click", () => nav.classList.toggle("active"));
-    }
+    document.querySelector(".menu-toggle")?.addEventListener("click", () => {
+      document.getElementById("memberNav").classList.toggle("active");
+    });
 
-    // Logout clears session and goes back to login
-    document.getElementById("logoutLink")?.addEventListener("click", (e)=>{
+    // FULL WORKING LOGOUT
+    document.getElementById("logoutLink")?.addEventListener("click", (e) => {
       e.preventDefault();
-      try { setUser(null); } catch {}
-      go("login.html");
+      try {
+        localStorage.removeItem("nkd-user");
+        sessionStorage.removeItem("nkd-user");
+      } catch {}
+      window.location.href = "login.html";
     });
   </script>
 
-  <!-- Controller -->
+  <!-- Dashboard Controller -->
   <script type="module" src="./js/member-dashboard.js"></script>
+
 </body>
 </html>
