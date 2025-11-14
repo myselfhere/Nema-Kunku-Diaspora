@@ -71,7 +71,10 @@
         <div class="card-header">Arrears</div>
         <div class="card-body">
           <div class="stat-big" id="arrearsYears">0 yrs</div>
-          <div class="muted"><span id="arrearsEUR">€0.00</span> · <span id="arrearsGMD">D0.00</span></div>
+          <div class="muted">
+            <span id="arrearsEUR">€0.00</span> ·
+            <span id="arrearsGMD">D0.00</span>
+          </div>
         </div>
       </div>
     </section>
@@ -159,23 +162,39 @@
 
   <!-- Mini user pill + logout wiring -->
   <script type="module">
-    // Fill the user pill from localStorage (set at login)
+    import { getUser, setUser, go } from "./js/nkd-bus.js";
+
+    // Fill the user pill from stored session
     try {
-      const u = JSON.parse(localStorage.getItem("nkd_user") || "null");
+      const u = getUser();
       const slot = document.querySelector("[data-user-slot]");
-      if (slot) slot.textContent = `${u?.name || "Member"} • member`;
-    } catch {}
+      if (slot) {
+        const roleLabel = (u?.role || "member");
+        slot.textContent = `${u?.name || "Member"} • ${roleLabel}`;
+      }
+      // Also reflect basic info in "My Account" card if available
+      if (u) {
+        const idSpan   = document.getElementById("myAccountId");
+        const nameSpan = document.getElementById("myAccountName");
+        if (idSpan)   idSpan.textContent   = u.memberId || "—";
+        if (nameSpan) nameSpan.textContent = u.name     || "Member";
+      }
+    } catch (e) {
+      console.warn("[Member Dashboard] Could not read user", e);
+    }
 
     // Mobile menu toggle
     const btn = document.querySelector(".menu-toggle");
     const nav = document.getElementById("memberNav");
-    btn && nav && btn.addEventListener("click", () => nav.classList.toggle("active"));
+    if (btn && nav) {
+      btn.addEventListener("click", () => nav.classList.toggle("active"));
+    }
 
-    // Logout clears local session
+    // Logout clears session and goes back to login
     document.getElementById("logoutLink")?.addEventListener("click", (e)=>{
       e.preventDefault();
-      localStorage.removeItem("nkd_user");
-      location.href = "login.html";
+      try { setUser(null); } catch {}
+      go("login.html");
     });
   </script>
 
