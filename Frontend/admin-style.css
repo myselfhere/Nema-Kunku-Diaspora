@@ -234,3 +234,26 @@ input:focus,select:focus,textarea:focus{
     width: 95% !important;
   }
 }
+
+/* Center dashboard cards on mobile */
+@media (max-width: 640px){
+  .card{
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: 95% !important;     /* keeps it centered */
+  }
+
+  /* also center title spacing */
+  .page-title{
+    text-align: center;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* center KPI big numbers */
+  .stat-value,
+  .stat-label,
+  .stat-sub {
+    text-align: center !important;
+  }
+}
