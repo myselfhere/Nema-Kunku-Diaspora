@@ -20,7 +20,11 @@ function load(key, d = null) {
 }
 
 /* ---------------- API Base ---------------- */
+<<<<<<< HEAD
 // Render server API base
+=======
+// IMPORTANT: change this to localhost when testing locally if you want
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
 const DEFAULT_API = "https://nema-kunku-diaspora.onrender.com/api";
 
 export function setApiBase(url) {
@@ -57,13 +61,28 @@ async function request(path, opts = {}) {
   return ct.includes("application/json") ? res.json() : res.text();
 }
 
+/* ---- NEW: named HTTP helpers so `import { get }` works ---- */
+export function get(path) {
+  return request(path);
+}
+export function post(path, body) {
+  return request(path, { method: "POST", body: JSON.stringify(body) });
+}
+export function put(path, body) {
+  return request(path, { method: "PUT", body: JSON.stringify(body) });
+}
+export function del(path) {
+  return request(path, { method: "DELETE" });
+}
+
+/* ---------------- API facade ---------------- */
 export const api = {
   base: getApiBase,
   setBase: setApiBase,
-  get: (p) => request(p),
-  post: (p, body) => request(p, { method: "POST", body: JSON.stringify(body) }),
-  put: (p, body) => request(p, { method: "PUT", body: JSON.stringify(body) }),
-  del: (p) => request(p, { method: "DELETE" }),
+  get,
+  post,
+  put,
+  del,
 
   async getMembers() {
     const r = await request("/members").catch(() => ({ items: [] }));
@@ -97,6 +116,7 @@ export function clearUser() {
 export function roleHome(role = "member") {
   const r = (role || "").toLowerCase();
 
+<<<<<<< HEAD
   switch (r) {
     case "admin":
     case "president":
@@ -117,6 +137,16 @@ export function roleHome(role = "member") {
     default:
       return "member-dashboard.html";
   }
+=======
+  if (r === "president") return "president-dashboard.html";
+  if (r === "admin") return "admin-dashboard.html";
+  if (r === "financial") return "financial-dashboard.html";
+  if (r === "project-manager") return "project-dashboard.html";
+  if (r === "secretary") return "secretary-dashboard.html";
+  if (r === "viewer") return "admin-members.html";
+
+  return "member-dashboard.html";
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
 }
 
 /* ---------------- Guard for restricted pages ---------------- */
@@ -138,6 +168,12 @@ export function go(href) {
   location.href = clean;
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * Highlight the active nav item and show the user in the header.
+ */
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
 export function activeNav(key = "") {
   const want = String(key || "").toLowerCase();
   const links = Array.from(
@@ -165,13 +201,21 @@ const euro = new Intl.NumberFormat("en-IE", {
   style: "currency",
   currency: "EUR",
 });
+
 const dalasi = new Intl.NumberFormat("en-GM", {
   style: "currency",
   currency: "GMD",
 });
 
+// EUR with 2 decimals
 export const fmtEUR = (v) => euro.format(Number(v || 0));
-export const fmtGMD = (v) => dalasi.format(Number(v || 0));
+
+// GMD with NO decimals: D3000, D150, etc.
+export const fmtGMD = (v) => {
+  const num = Number(v || 0);
+  const rounded = Math.round(num);
+  return `D${rounded}`;
+};
 
 export function toYYYYMMDD(d) {
   const x = new Date(d);
@@ -264,7 +308,11 @@ export async function resolveMemberByIdentifier(identifier = "") {
 export function offlineRoleFromEmail(email = "") {
   const e = (email || "").toLowerCase();
 
+<<<<<<< HEAD
   if (e.includes("salme") || e.includes("nkd001")) return "admin";
+=======
+  if (e.includes("salme") || e === "nkd001") return "admin";
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
   if (e.includes("president")) return "president";
   if (e.includes("secretary")) return "secretary";
   if (e.includes("financial")) return "financial";
@@ -274,7 +322,11 @@ export function offlineRoleFromEmail(email = "") {
   return "member";
 }
 
+<<<<<<< HEAD
 /* ---------------- Toast ---------------- */
+=======
+/* ---------------- Toast helper ---------------- */
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
 export function toast(message, type = "info") {
   if (!message) return;
 

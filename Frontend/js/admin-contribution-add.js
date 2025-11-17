@@ -1,199 +1,273 @@
-// admin-contribution-add.js — final version
-// Compatible with /Frontend/admin-contribution-add.html
+// Frontend/js/admin-contribution-add.js
+import { api, getUser, setUser, fmtEUR, fmtGMD } from "./nkd-bus.js";
 
-const $ = (s, r = document) => r.querySelector(s);
-const byId = id => document.getElementById(id);
+const $id = (x) => document.getElementById(x);
+let memberMap = new Map();
 
-// Quick post helper (adjust URL to your API)
-async function post(url, data) {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error((await res.text()) || "Failed");
-  try { return await res.json(); } catch { return { ok: true }; }
+const n = (v) => Number(v || 0);
+
+function todayYMD() {
+  const d = new Date();
+  return (
+    d.getFullYear() +
+    "-" +
+    String(d.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(d.getDate()).padStart(2, "0")
+  );
 }
 
-// ===== INIT =====
-(function init() {
-  // Date default
-  byId("date").valueAsDate = new Date();
+function initTopUser() {
+  const u = getUser() || { name: "Admin", role: "admin" };
+  const slot = document.querySelector("[data-user-slot]");
+  if (slot) slot.textContent = `${u.name} • ${u.role}`;
+}
 
-  // Rate mirror in quick info
-  const rate = byId("rate");
-  const qiRate = byId("qiRate");
-  rate.addEventListener("input", () => (qiRate.textContent = rate.value || "—"));
+function initYears() {
+  const sel = $id("yearsPaid");
+  if (!sel) return;
+  sel.innerHTML = "";
+  const end = new Date().getFullYear() + 1;
+  for (let y = 2018; y <= end; y++) {
+    const o = document.createElement("option");
+    o.value = String(y);
+    o.textContent = String(y);
+    sel.appendChild(o);
+  }
+}
 
-  // Populate year list (2015 -> next year)
-  const yearsPaid = byId("yearsPaid");
-  const nowY = new Date().getFullYear();
-  for (let y = nowY + 1; y >= 2015; y--) {
-    const opt = new Option(y, y);
-    yearsPaid.add(opt);
+async function loadMembers() {
+  try {
+    const raw = await api.getMembers().catch(() => []);
+    const list = raw.items || raw || [];
+    const select = $id("memberSelect");
+
+    console.log("[Admin Contrib Add] memberSelect on init:", select);
+
+    if (!select) {
+      console.warn("[Admin Contrib Add] loadMembers: #memberSelect not found in DOM");
+      return;
+    }
+
+    select.innerHTML = `<option value="">Select member...</option>`;
+    memberMap = new Map();
+
+    list.forEach((m) => {
+      const id = m.memberId || m.memberID;
+      if (!id || !m.name) return;
+      memberMap.set(id, m);
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = `${id} — ${m.name}`;
+      select.appendChild(opt);
+    });
+
+    console.log("[Admin Contrib Add] members loaded:", memberMap.size);
+  } catch (err) {
+    console.error("[Admin Contrib Add] loadMembers failed", err);
+  }
+}
+
+function setupToggles() {
+  const cbUn = $id("isUnreg");
+  const wrapUn = $id("unregWrap");
+  const memberSelect = $id("memberSelect");
+
+  if (cbUn && wrapUn) {
+    cbUn.addEventListener("change", () => {
+      const on = cbUn.checked;
+      wrapUn.style.display = on ? "grid" : "none";
+      if (on && memberSelect) {
+        memberSelect.value = "";
+        $id("memberId").value = "";
+      }
+    });
   }
 
-  // Add custom year
-  byId("addYearBtn").addEventListener("click", () => {
-    const v = byId("customYear").value.trim();
-    if (!/^\d{4}$/.test(v)) return alert("Enter valid 4-digit year");
-    const exists = [...yearsPaid.options].some(o => o.value === v);
+  if (memberSelect) {
+    memberSelect.addEventListener("change", () => {
+      const id = memberSelect.value;
+      if (!id) return;
+      const m = memberMap.get(id);
+      if (!m) return;
+      $id("memberId").value = m.memberId || "";
+    });
+  }
+
+  // Penalty toggle
+  const penCB = $id("penaltyApplied");
+  const penWrap = $id("penaltyWrap");
+  if (penCB && penWrap) {
+    penCB.addEventListener("change", () => {
+      penWrap.style.display = penCB.checked ? "grid" : "none";
+    });
+  }
+}
+
+function hookAutoConvert() {
+  const eur = $id("amountEUR");
+  const gmd = $id("amountGMD");
+  const rate = $id("rate");
+  const chk = $id("autoConvert");
+  if (!eur || !gmd || !rate || !chk) return;
+
+  eur.addEventListener("blur", () => {
+    if (!chk.checked) return;
+    const r = parseFloat(rate.value) || 0;
+    const v = parseFloat(eur.value) || 0;
+    if (r && v) gmd.value = (v * r).toFixed(2);
+  });
+
+  gmd.addEventListener("blur", () => {
+    if (!chk.checked) return;
+    const r = parseFloat(rate.value) || 0;
+    const v = parseFloat(gmd.value) || 0;
+    if (r && v) eur.value = (v / r).toFixed(2);
+  });
+}
+
+function setupYearAdd() {
+  const btn = $id("addYearBtn");
+  const field = $id("customYear");
+  const list = $id("yearsPaid");
+  if (!btn || !field || !list) return;
+
+  btn.addEventListener("click", () => {
+    const y = (field.value || "").trim();
+    if (!/^\d{4}$/.test(y)) {
+      alert("Enter year as 4 digits, e.g. 2024");
+      return;
+    }
+    const exists = [...list.options].some((o) => o.value === y);
     if (!exists) {
-      const opt = new Option(v, v);
-      yearsPaid.add(opt, 0);
+      const opt = document.createElement("option");
+      opt.value = y;
+      opt.textContent = y;
+      list.appendChild(opt);
     }
-    [...yearsPaid.options].forEach(o => (o.selected = o.value === v || o.selected));
-    byId("customYear").value = "";
+    [...list.options].forEach((o) => {
+      if (o.value === y) o.selected = true;
+    });
+    field.value = "";
   });
+}
 
-  // ===== Unregistered payer toggle =====
-  const isUnreg = byId("isUnreg");
-  const unregWrap = byId("unregWrap");
-  isUnreg.addEventListener("change", () => {
-    unregWrap.style.display = isUnreg.checked ? "grid" : "none";
-    if (!isUnreg.checked) {
-      byId("payerName").value = "";
-      byId("payerContact").value = "";
-    }
-  });
+function getSelectedYears() {
+  const sel = $id("yearsPaid");
+  if (!sel) return [];
+  return [...sel.selectedOptions].map((o) => o.value);
+}
 
-  // ===== Penalty toggle (hides Period section) =====
-  const penaltyApplied = byId("penaltyApplied");
-  const penaltyWrap = byId("penaltyWrap");
-  const periodSection = byId("yearsPaid").closest("section"); // Period card
-  penaltyApplied.addEventListener("change", () => {
-    const show = penaltyApplied.checked;
-    penaltyWrap.style.display = show ? "grid" : "none";
-    periodSection.style.display = show ? "none" : "block";
-    if (!show) {
-      byId("penaltyAmountGMD").value = "0";
-      byId("penaltyReason").value = "";
-    }
-  });
+function buildPayload() {
+  const isUnreg = $id("isUnreg").checked;
+  const memberId = !isUnreg ? ($id("memberId").value || "").trim() : null;
 
-  // ===== Auto convert currency =====
-  const autoConvert = byId("autoConvert");
-  const amountEUR = byId("amountEUR");
-  const amountGMD = byId("amountGMD");
-
-  const convert = (from) => {
-    if (!autoConvert.checked) return;
-    const r = Number(rate.value || 0);
-    if (!r) return;
-    if (from === "EUR" && Number(amountGMD.value || 0) === 0) {
-      amountGMD.value = (Number(amountEUR.value || 0) * r).toFixed(2);
-    } else if (from === "GMD" && Number(amountEUR.value || 0) === 0) {
-      amountEUR.value = (Number(amountGMD.value || 0) / r).toFixed(2);
-    }
-  };
-
-  amountEUR.addEventListener("blur", () => convert("EUR"));
-  amountGMD.addEventListener("blur", () => convert("GMD"));
-
-  // ===== Members list (placeholder demo — connect to backend) =====
-  const memberSel = byId("memberSel");
-  [
-    { name: "Salme Ture", id: "NKD001", position: "Admin", plan: "Annually" },
-    { name: "Lamin Kanyi", id: "NKD002", position: "Member", plan: "Annually" },
-    { name: "Fatou Jatta", id: "NKD003", position: "Member", plan: "Quarterly" }
-  ].forEach(m => {
-    const opt = new Option(`${m.name} (${m.id})`, m.id);
-    opt.dataset.position = m.position;
-    opt.dataset.plan = m.plan;
-    memberSel.add(opt);
-  });
-
-  memberSel.addEventListener("change", () => {
-    const sel = memberSel.selectedOptions[0];
-    if (!sel) return;
-    byId("memberId").value = sel.value || "";
-    byId("position").value = sel.dataset.position || "";
-    byId("plan").value = sel.dataset.plan || "Annually";
-  });
-
-  // ===== Save actions =====
-  byId("contribForm").addEventListener("submit", onSave);
-  byId("savePrintBtn").addEventListener("click", () => onSave(null, { print: true }));
-  byId("saveEmailBtn").addEventListener("click", () => onSave(null, { email: true }));
-})();
-
-// ====== SAVE FUNCTION ======
-async function onSave(e, opts = {}) {
-  e && e.preventDefault();
-  const msg = byId("msg");
-  const getMulti = sel => [...sel.selectedOptions].map(o => Number(o.value)).filter(Boolean);
-
-  // Basic validation
-  if (!byId("date").value) return alert("Date is required.");
-  if (!byId("method").value) return alert("Payment method is required.");
-  if (!byId("memberSel").value && !byId("isUnreg").checked)
-    return alert("Select a member or tick 'not registered member'.");
-  if (byId("isUnreg").checked && !byId("payerName").value.trim())
-    return alert("Enter unregistered payer name.");
-  if (byId("penaltyApplied").checked) {
-    if (Number(byId("penaltyAmountGMD").value) <= 0) return alert("Enter penalty amount.");
-    if (!byId("penaltyReason").value.trim()) return alert("Enter penalty reason.");
+  let memberName = null;
+  if (!isUnreg && memberId && memberMap.has(memberId)) {
+    memberName = memberMap.get(memberId).name || null;
   }
+
+  const payerName = isUnreg
+    ? ($id("payerName").value || "").trim()
+    : memberName;
 
   const payload = {
     // Core
-    receipt: byId("receipt").value.trim(),
-    date: byId("date").value,
-    memberId: byId("memberId").value.trim(),
-    memberName: byId("memberSel").selectedOptions[0]?.text?.replace(/\s*\(NKD.*\)$/, "") || "",
-    isUnregistered: byId("isUnreg").checked,
-    payerName: byId("isUnreg").checked ? byId("payerName").value.trim() : "",
-    payerContact: byId("isUnreg").checked ? byId("payerContact").value.trim() : "",
-    contributionPlan: byId("plan").value,
-    paymentMethod: byId("method").value,
-    amountEUR: Number(byId("amountEUR").value || 0),
-    amountGMD: Number(byId("amountGMD").value || 0),
-    rateGMDperEUR: Number(byId("rate").value || 0),
-    autoConvert: byId("autoConvert").checked,
-    position: byId("position").value.trim(),
-    confirmedBy: byId("confirmedBy").value.trim(),
+    date: $id("date").value,
+    receiptNumber: ($id("receipt").value || "").trim() || undefined,
 
-    // Period
-    yearsPaid: getMulti(byId("yearsPaid")),
-    remarks: byId("remarks").value.trim(),
+    isMember: !isUnreg,
+    memberId: memberId,
+    memberName: memberName,
 
-    // Penalty
-    penaltyApplied: byId("penaltyApplied").checked,
-    penaltyAmountGMD: Number(byId("penaltyAmountGMD").value || 0),
-    penaltyReason: byId("penaltyReason").value.trim()
+    payerName: payerName || null,
+    payerContact: isUnreg ? ($id("payerContact").value || "").trim() : "",
+
+    contributionPlan: $id("plan").value || "Annually",
+    paymentMethod: $id("method").value || "",
+    amountEUR: n($id("amountEUR").value),
+    amountGMD: n($id("amountGMD").value),
+    rate: n($id("rate").value),
+
+    position: "",        // kept for compatibility with backend
+    confirmedBy: "",     // kept for compatibility with backend
+
+    yearsPaid: getSelectedYears(),
+    remarks: ($id("remarks").value || "").trim(),
+
+    penaltyApplied: $id("penaltyApplied").checked,
+    penaltyAmountGMD: n($id("penaltyAmountGMD").value),
+    penaltyReason: ($id("penaltyReason").value || "").trim()
   };
 
-  // Normalize “Auto”
-  if (!payload.receipt || /^auto$/i.test(payload.receipt)) delete payload.receipt;
+  return payload;
+}
+
+async function save() {
+  const payload = buildPayload();
+  console.log("Saving:", payload);
+
+  // Frontend validations
+  if (!payload.date) {
+    alert("Please select a date.");
+    return;
+  }
+  if (!payload.paymentMethod) {
+    alert("Please choose payment method.");
+    return;
+  }
+  if (!payload.amountEUR && !payload.amountGMD) {
+    alert("Please enter an amount (EUR or GMD).");
+    return;
+  }
+  if (payload.isMember && !payload.memberId) {
+    alert("Please select a member or tick 'Payer is NOT a registered member'.");
+    return;
+  }
+  if (!payload.isMember && !payload.payerName) {
+    alert("Please enter payer full name for unregistered payer.");
+    return;
+  }
+
+  const msg = $id("msg");
+  msg.textContent = "Saving…";
 
   try {
-    msg.textContent = "Saving...";
-    const res = await post("/api/contributions", payload);
-    msg.textContent = "Saved.";
-    const saved = res?.data || res;
-    const receiptId = saved?.receipt || payload.receipt;
-
-    if (opts.print) {
-      if (!receiptId) return alert("Saved, but no receipt to print.");
-      const id = encodeURIComponent(receiptId);
-      const w = window.open(`admin-contribution-view.html?id=${id}`, "_blank");
-      if (w) w.onload = () => w.print();
-      setTimeout(() => (window.location.href = "admin-contributions.html"), 600);
-      return;
-    }
-
-    if (opts.email) {
-      try {
-        await post(`/api/contributions/${encodeURIComponent(receiptId)}/email`, {});
-        alert("Saved. If mail configured, receipt sent.");
-      } catch {}
-      window.location.href = "admin-contributions.html";
-      return;
-    }
-
-    window.location.href = "admin-contributions.html";
+    await api.post("/contributions", payload);
+    msg.textContent = `Saved. EUR: ${fmtEUR(payload.amountEUR)} · GMD: ${fmtGMD(
+      payload.amountGMD
+    )}`;
+    setTimeout(() => {
+      location.href = "admin-contributions.html";
+    }, 700);
   } catch (err) {
-    msg.textContent = err.message || "Failed to save.";
-    alert(msg.textContent);
+    console.error("[Admin Contrib Add] save failed", err);
+    msg.textContent = "Save failed: " + (err?.error || "Missing required fields");
   }
 }
+
+function initSubmit() {
+  const form = $id("contribForm");
+  if (!form) return;
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    save();
+  });
+}
+
+function init() {
+  console.log("[Admin Contrib Add] DOM ready");
+  initTopUser();
+  const dateEl = $id("date");
+  if (dateEl && !dateEl.value) {
+    dateEl.value = todayYMD();
+  }
+  initYears();
+  loadMembers();
+  setupToggles();
+  hookAutoConvert();
+  setupYearAdd();
+  initSubmit();
+}
+
+document.addEventListener("DOMContentLoaded", init);

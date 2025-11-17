@@ -4,236 +4,221 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Add Contribution — Admin</title>
+
   <link rel="stylesheet" href="admin-style.css" />
+
+  <style>
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media(max-width:768px){ .two-col{ grid-template-columns:1fr; } }
+  </style>
 </head>
 <body>
-  <!-- NAVBAR -->
-  <header class="admin-topbar">
-    <div class="container row">
-      <button class="menu-toggle" aria-label="Menu">☰</button>
-      <nav class="admin-nav" id="adminNav">
-        <a href="admin-dashboard.html">Dashboard</a>
-        <a href="admin-members.html">Members</a>
-        <a class="active" href="admin-contributions.html">Contributions</a>
-        <a href="admin-expenditures.html">Expenditures</a>
-        <a href="projects-dashboard.html">Projects</a>
-        <a href="admin-meetings.html">Meetings</a>
-        <a href="admin-settings.html">Settings</a>
-      </nav>
-      <div class="admin-user">
-        <span>Offline Admin · <span data-user-slot></span></span>
-        <a href="admin-login.html">Logout</a>
+
+<header class="admin-topbar">
+  <div class="container row">
+    <button class="menu-toggle">☰</button>
+    <nav class="admin-nav" id="adminNav">
+      <a href="admin-dashboard.html">Dashboard</a>
+      <a href="admin-members.html">Members</a>
+      <a class="active" href="admin-contributions.html">Contributions</a>
+      <a href="admin-expenditures.html">Expenditures</a>
+      <a href="projects-dashboard.html">Projects</a>
+      <a href="admin-meetings.html">Meetings</a>
+      <a href="admin-settings.html">Settings</a>
+    </nav>
+
+    <div class="admin-user">
+      <span data-user-slot>Admin</span>
+      <a id="logoutLink" href="#">Logout</a>
+    </div>
+  </div>
+</header>
+
+<main class="admin-shell">
+  <h1 class="page-title">Add Contribution</h1>
+
+  <form id="contribForm" class="card" style="padding:20px">
+
+    <!-- 1. Date & Receipt -->
+    <section class="card" style="margin-bottom:20px">
+      <div class="card-header">1. Date & Receipt</div>
+      <div class="card-body two-col">
+        <div class="form-group">
+          <label for="date">Date required</label>
+          <input id="date" type="date" required>
+          <p class="form-hint">dd/mm/yyyy</p>
+        </div>
+
+        <div class="form-group">
+          <label for="receipt">Receipt Number</label>
+          <input id="receipt" placeholder="Auto" />
+          <p class="form-hint">Leave blank for automatic REC-xxxx</p>
+        </div>
       </div>
-    </div>
-  </header>
+    </section>
 
-  <main class="admin-shell">
-    <h1 class="page-title">Add Contribution</h1>
+    <!-- 2. Payer & Member -->
+    <section class="card" style="margin-bottom:20px">
+      <div class="card-header">2. Payer & Member</div>
+      <div class="card-body two-col">
 
-    <div class="container content-grid">
-      <!-- Left: form -->
-      <form id="contribForm" class="card" style="padding:16px" autocomplete="off">
-        <!-- Receipt details -->
-        <section class="card" style="margin-bottom:16px">
-          <div class="card-header">Receipt Details</div>
-          <div class="card-body two-col">
-            <div class="form-group">
-              <label for="date">Date <span class="required">required</span></label>
-              <input id="date" type="date" />
-              <p class="form-hint">dd/mm/yyyy</p>
-            </div>
-
-            <div class="form-group">
-              <label for="receipt">Receipt Number</label>
-              <input id="receipt" placeholder="Auto" />
-              <p class="form-hint">Auto-generated if left as “Auto”.</p>
-            </div>
-
-            <div class="form-group">
-              <label for="memberSel">Member</label>
-              <select id="memberSel">
-                <option value="">Select member...</option>
-              </select>
-              <p class="form-hint">Selecting a member fills ID / Position / Plan.</p>
-            </div>
-
-            <div class="form-group">
-              <label for="memberId">Member ID</label>
-              <input id="memberId" placeholder="NKD###" />
-            </div>
-
-            <div class="form-group" style="grid-column: 1 / -1;">
-              <label class="row gap">
-                <input id="isUnreg" type="checkbox" />
-                Payer is <strong>not</strong> a registered member
-              </label>
-            </div>
-
-            <!-- Unregistered payer block (hidden until checked) -->
-            <div id="unregWrap" class="two-col" style="grid-column:1/-1; display:none">
-              <div class="form-group">
-                <label for="payerName">Payer Name (unregistered)</label>
-                <input id="payerName" placeholder="Full name of payer" />
-              </div>
-              <div class="form-group">
-                <label for="payerContact">Payer Contact</label>
-                <input id="payerContact" placeholder="Phone or email" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Contribution -->
-        <section class="card" style="margin-bottom:16px">
-          <div class="card-header">Contribution</div>
-          <div class="card-body two-col">
-            <div class="form-group">
-              <label for="plan">Contribution Plan</label>
-              <select id="plan">
-                <option>Annually</option>
-                <option>Monthly</option>
-                <option>One-off</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="method">Payment Method <span class="required">required</span></label>
-              <select id="method" required>
-                <option value="">Select...</option>
-                <option>Cash</option>
-                <option>Bank Deposit</option>
-                <option>Wave</option>
-                <option>Transfer</option>
-                <option>Other</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="amountEUR">Amount (EUR)</label>
-              <input id="amountEUR" type="number" min="0" step="0.01" value="0" />
-            </div>
-
-            <div class="form-group">
-              <label for="amountGMD">Amount (GMD)</label>
-              <input id="amountGMD" type="number" min="0" step="0.01" value="0" />
-            </div>
-
-            <div class="form-group">
-              <label for="rate">Rate (GMD per €)</label>
-              <input id="rate" type="number" min="0" step="0.01" value="75" />
-              <p class="form-hint">When enabled, if one currency is filled and the other is empty, we auto-convert.</p>
-            </div>
-
-            <div class="form-group">
-              <label class="row gap" style="margin-top:26px">
-                <input id="autoConvert" type="checkbox" checked />
-                Auto-convert
-              </label>
-            </div>
-
-            <div class="form-group">
-              <label for="position">Position</label>
-              <input id="position" placeholder="Member / Financial Secretary ..." />
-            </div>
-
-            <div class="form-group">
-              <label for="confirmedBy">Confirmed By</label>
-              <input id="confirmedBy" placeholder="Name of confirmer" />
-            </div>
-          </div>
-        </section>
-
-        <!-- Period (years + remarks) -->
-        <section class="card" style="margin-bottom:16px">
-          <div class="card-header">Period</div>
-          <div class="card-body two-col">
-            <div class="form-group">
-              <label for="yearsPaid">Years Paid (multi-select)</label>
-              <select id="yearsPaid" multiple size="6"></select>
-              <p class="form-hint">Hold Ctrl/Cmd to choose multiple.</p>
-            </div>
-
-            <div class="form-group">
-              <label for="customYear">Add Custom Year</label>
-              <div class="row gap">
-                <input id="customYear" placeholder="e.g., 2022" />
-                <button type="button" id="addYearBtn" class="btn btn-secondary">+ Add Year</button>
-              </div>
-            </div>
-
-            <div class="form-group" style="grid-column:1 / -1">
-              <label for="remarks">Remarks</label>
-              <textarea id="remarks" rows="3" placeholder="Optional notes..."></textarea>
-            </div>
-          </div>
-        </section>
-
-        <!-- Penalty (hidden until checked) -->
-        <section class="card" style="margin-bottom:16px">
-          <div class="card-header">Penalty</div>
-          <div class="card-body">
-            <label class="row gap" style="margin-bottom:12px">
-              <input id="penaltyApplied" type="checkbox" />
-              Penalty applies (late/arrears)
-            </label>
-
-            <div id="penaltyWrap" class="two-col" style="display:none">
-              <div class="form-group">
-                <label for="penaltyAmountGMD">Penalty Amount (GMD)</label>
-                <input id="penaltyAmountGMD" type="number" min="0" step="0.01" value="0" />
-              </div>
-              <div class="form-group">
-                <label for="penaltyReason">Penalty Reason</label>
-                <input id="penaltyReason" placeholder="e.g., Late payment for 2018–2024 arrears" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Actions -->
-        <div class="row gap end">
-          <a class="btn" href="admin-contributions.html">Cancel</a>
-          <button id="savePrintBtn" type="button" class="btn btn-secondary">Save + Print</button>
-          <button id="saveEmailBtn" type="button" class="btn btn-secondary">Save + Email</button>
-          <button id="saveBtn" type="submit" class="btn btn-primary">Save Contribution</button>
+        <div class="form-group">
+          <label for="memberSelect">Member (registered)</label>
+          <select id="memberSelect">
+            <option value="">Select member...</option>
+          </select>
+          <p class="form-hint">Choose the member whose contribution this is for.</p>
         </div>
 
-        <p id="msg" class="form-hint" style="margin-top:10px"></p>
-      </form>
-
-      <!-- Right: quick info -->
-      <aside class="card info-panel" style="height:max-content">
-        <div class="card-header">Quick Info</div>
-        <div class="card-body">
-          <table class="table-mini">
-            <thead><tr><th>Rule</th><th class="right">Value</th></tr></thead>
-            <tbody>
-              <tr><td>Default rate</td><td class="right"><span id="qiRate">75</span> GMD / €</td></tr>
-              <tr><td>Penalty start (arrears 2018–2024)</td><td class="right">01-Sep-2025</td></tr>
-              <tr><td>Receipt prefix</td><td class="right">REC-</td></tr>
-            </tbody>
-          </table>
+        <div class="form-group">
+          <label for="memberId">Member ID</label>
+          <input id="memberId" placeholder="NKD###" />
+          <p class="form-hint">Filled automatically.</p>
         </div>
-      </aside>
+
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="row gap">
+            <input id="isUnreg" type="checkbox"/>
+            Payer is NOT a registered member
+          </label>
+          <p class="form-hint">Family / supporter / friend paying on behalf of a member.</p>
+        </div>
+
+        <!-- Unregistered payer -->
+        <div id="unregWrap" class="two-col" style="grid-column:1/-1; display:none;">
+          <div class="form-group">
+            <label for="payerName">Payer Full Name</label>
+            <input id="payerName" placeholder="If unregistered, enter full name" />
+          </div>
+
+          <div class="form-group">
+            <label for="payerContact">Payer Contact</label>
+            <input id="payerContact" placeholder="Phone / email (optional)" />
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 3. Amount & Method -->
+    <section class="card" style="margin-bottom:20px">
+      <div class="card-header">3. Amount & Method</div>
+      <div class="card-body two-col">
+
+        <div class="form-group">
+          <label for="plan">Contribution Plan</label>
+          <select id="plan">
+            <option value="Annually">Annually</option>
+            <option value="Semi-Annual">Semi-Annual</option>
+            <option value="Monthly">Monthly</option>
+            <option value="One-off">One-off</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="method">Payment Method</label>
+          <select id="method" required>
+            <option value="">Select...</option>
+            <option>Cash</option>
+            <option>Wave</option>
+            <option>Transfer</option>
+            <option>Bank Deposit</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="amountEUR">Amount (EUR)</label>
+          <input id="amountEUR" type="number" min="0" step="0.01" />
+        </div>
+
+        <div class="form-group">
+          <label for="amountGMD">Amount (GMD)</label>
+          <input id="amountGMD" type="number" min="0" step="0.01" />
+        </div>
+
+        <div class="form-group">
+          <label for="rate">Rate (GMD per €)</label>
+          <input id="rate" type="number" value="75" step="0.01" />
+        </div>
+
+        <div class="form-group">
+          <label class="row gap" style="margin-top:26px">
+            <input id="autoConvert" type="checkbox" checked/>
+            Auto-convert
+          </label>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 4. Years Covered -->
+    <section class="card" style="margin-bottom:20px">
+      <div class="card-header">4. Years Covered</div>
+      <div class="card-body two-col">
+
+        <div class="form-group">
+          <label for="yearsPaid">Years Paid (multi-select)</label>
+          <select id="yearsPaid" size="6" multiple></select>
+          <p class="form-hint">Hold Ctrl/Cmd for multiple.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="customYear">Add Custom Year</label>
+          <div class="row gap">
+            <input id="customYear" placeholder="e.g., 2024" />
+            <button id="addYearBtn" type="button" class="btn btn-secondary">+ Add</button>
+          </div>
+        </div>
+
+        <div class="form-group" style="grid-column:1/-1;">
+          <label for="remarks">Remarks</label>
+          <textarea id="remarks" rows="3" placeholder="Optional notes..."></textarea>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 5. Penalty -->
+    <section class="card" style="margin-bottom:20px">
+      <div class="card-header">5. Penalty</div>
+      <div class="card-body">
+
+        <label class="row gap" style="margin-bottom:12px;">
+          <input id="penaltyApplied" type="checkbox"/>
+          Penalty applies (late / arrears)
+        </label>
+
+        <div id="penaltyWrap" class="two-col" style="display:none;">
+          <div class="form-group">
+            <label for="penaltyAmountGMD">Penalty Amount (GMD)</label>
+            <input id="penaltyAmountGMD" type="number" step="0.01" />
+          </div>
+
+          <div class="form-group">
+            <label for="penaltyReason">Penalty Reason</label>
+            <input id="penaltyReason" placeholder="e.g., 2018–2024 arrears" />
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <div class="row gap end">
+      <a class="btn btn-light" href="admin-contributions.html">Cancel</a>
+      <button id="saveBtn" type="submit" class="btn btn-primary">Save Contribution</button>
     </div>
-  </main>
 
-  <footer class="admin-footer">
-    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
-  </footer>
+    <p id="msg" class="form-hint" style="margin-top:10px;"></p>
+  </form>
 
-  <!-- User + mobile menu -->
-  <script type="module">
-    import { getUser } from "./js/nkd-bus.js";
-    const u = getUser?.() || { name: "admin", role: "admin" };
-    const slot = document.querySelector("[data-user-slot]");
-    slot && (slot.textContent = `${u?.name || "Offline Admin"} · ${u?.role || "admin"}`);
-    const btn = document.querySelector(".menu-toggle");
-    const nav = document.getElementById("adminNav");
-    btn && nav && btn.addEventListener("click", () => nav.classList.toggle("active"));
-  </script>
+</main>
 
-  <!-- Controller -->
-  <script type="module" src="./js/admin-contribution-add.js"></script>
+<footer class="admin-footer">
+  © 2025 <strong>Nema Kunku Diaspora</strong>
+</footer>
+
+<!-- Scripts -->
+<script type="module" src="./js/admin-contribution-add.js"></script>
+
 </body>
 </html>

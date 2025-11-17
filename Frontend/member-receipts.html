@@ -1,25 +1,69 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Receipts — Member</title>
+
   <link rel="stylesheet" href="admin-style.css" />
+
   <style>
-    .mt-16 { margin-top: 16px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-    @media (max-width: 900px) { .grid-3 { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 640px) { .grid-3 { grid-template-columns: 1fr; } }
-    .sticky-header thead th { position: sticky; top: 0; background: #f5fbf5; z-index: 1; }
-    .row-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 15px 20px;
+      border-left: 5px solid #2e7d32;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    }
+    .stat-title {
+      font-size: 14px;
+      color: #2e7d32;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .stat-value {
+      font-size: 22px;
+      font-weight: bold;
+      color: #1b4d1a;
+    }
+
+    table.receipts-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    table.receipts-table th, table.receipts-table td {
+      padding: 12px;
+      border-bottom: 1px solid #e8e8e8;
+      font-size: 14px;
+    }
+    table.receipts-table th {
+      background: #f0f7f0;
+      color: #2e7d32;
+      text-align: left;
+      font-weight: 600;
+    }
+    table.receipts-table tr:last-child td {
+      border-bottom: none;
+    }
   </style>
 </head>
 
 <body>
+
   <!-- NAVBAR -->
   <header class="admin-topbar">
     <div class="container row">
       <button class="menu-toggle" aria-label="Menu">☰</button>
+
       <nav class="admin-nav" id="adminNav">
         <a href="member-dashboard.html">Dashboard</a>
         <a href="member-contributions.html">Contributions</a>
@@ -27,52 +71,42 @@
         <a href="member-projects.html">Projects</a>
         <a href="member-settings.html">Settings</a>
       </nav>
+
       <div class="admin-user">
-        <span data-user-slot>Member • member</span>
+        <span data-user-slot>Member</span>
         <a href="login.html">Logout</a>
       </div>
     </div>
   </header>
 
-  <!-- MAIN -->
+  <!-- CONTENT -->
   <main class="admin-shell">
     <h1 class="page-title">My Receipts</h1>
 
-    <!-- SUMMARY -->
-    <section class="grid-3">
-      <div class="card">
-        <div class="card-header">Total Receipts</div>
-        <div class="card-body">
-          <div id="statCount" class="stat-big">0</div>
-          <div class="muted">All recorded contributions</div>
-        </div>
+    <!-- TOP STAT CARDS -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Total Receipts</div>
+        <div class="stat-value" id="totalCount">0</div>
       </div>
-      <div class="card">
-        <div class="card-header">Total Paid (EUR)</div>
-        <div class="card-body">
-          <div id="statEUR" class="stat-big">€0.00</div>
-          <div class="muted">Sum of all receipts in EUR</div>
-        </div>
+
+      <div class="stat-card">
+        <div class="stat-title">Total Paid (EUR)</div>
+        <div class="stat-value" id="totalEur">€0.00</div>
       </div>
-      <div class="card">
-        <div class="card-header">Total Paid (GMD)</div>
-        <div class="card-body">
-          <div id="statGMD" class="stat-big">D0.00</div>
-          <div class="muted">Sum of all receipts in GMD</div>
-        </div>
+
+      <div class="stat-card">
+        <div class="stat-title">Total Paid (GMD)</div>
+        <div class="stat-value" id="totalGmd">D0.00</div>
       </div>
     </section>
 
     <!-- TABLE -->
-    <section class="card mt-16">
-      <div class="card-header row-between">
-        <span>All Receipts</span>
-        <button id="downloadCsvBtn" class="btn btn-light">Download CSV</button>
-      </div>
-
+    <section class="card">
+      <div class="card-header">All Receipts</div>
       <div class="card-body">
-        <div class="table-wrap sticky-header">
-          <table class="table-mini">
+        <div class="table-responsive">
+          <table class="receipts-table">
             <thead>
               <tr>
                 <th>Receipt</th>
@@ -85,41 +119,25 @@
               </tr>
             </thead>
             <tbody id="receiptsTbody">
-              <tr><td colspan="7" class="muted">Loading…</td></tr>
+              <!-- Filled by JS -->
             </tbody>
           </table>
         </div>
       </div>
     </section>
-
-    <!-- REMINDERS -->
-    <section class="card mt-16">
-      <div class="card-header">Reminders</div>
-      <div class="card-body">
-        <ul class="muted">
-          <li>Annual contributions due by <strong>31 Dec 2025</strong>.</li>
-          <li>Penalties for <strong>2018–2024</strong> arrears apply from <strong>1 Sep 2025</strong>.</li>
-        </ul>
-      </div>
-    </section>
   </main>
 
   <footer class="admin-footer">
-    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All Rights Reserved.
   </footer>
 
-  <!-- MENU + USER -->
+  <script type="module" src="./js/member-receipts.js"></script>
   <script type="module">
     import { getUser } from "./js/nkd-bus.js";
     const u = getUser();
-    const slot = document.querySelector("[data-user-slot]");
-    if (slot) slot.textContent = `${u?.name || "Member"} • ${u?.role || "member"}`;
-    const btn = document.querySelector(".menu-toggle");
-    const nav = document.getElementById("adminNav");
-    if (btn && nav) btn.addEventListener("click", () => nav.classList.toggle("active"));
+    document.querySelector("[data-user-slot]").textContent =
+      `${u?.name || "Member"} • ${u?.role || ""}`;
   </script>
 
-  <!-- CONTROLLER -->
-  <script type="module" src="./js/member-receipts.js"></script>
 </body>
 </html>

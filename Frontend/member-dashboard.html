@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Member Dashboard — Nema Kunku Diaspora</title>
 
+<<<<<<< HEAD
   <!-- Shared admin/member style -->
   <link rel="stylesheet" href="admin-style.css" />
 
@@ -24,15 +25,68 @@
     .right { text-align: right; }
     .center { text-align: center; }
     .sticky-header thead th { position: sticky; top: 0; z-index: 1; background: #f5fbf5; }
+=======
+  <link rel="stylesheet" href="admin-style.css" />
+
+  <style>
+    /* === CENTER ALL DASHBOARD CONTENT === */
+    .dashboard-wrap {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .content-grid {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .card {
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* custom grid control */
+    .grid-2 { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 16px; 
+    }
+
+    .grid-4 { 
+      display: grid; 
+      grid-template-columns: repeat(4, 1fr); 
+      gap: 16px; 
+    }
+
+    @media (max-width: 1100px){ .grid-4{ grid-template-columns: repeat(2,1fr);} }
+    @media (max-width: 640px){ .grid-4, .grid-2{ grid-template-columns: 1fr; } }
+
+    .stat-big { font-size: 32px; font-weight: 800; color: #1b5e20; }
+    .mt-16 { margin-top: 16px; }
+    .right { text-align:right; }
+    .center{text-align:center;}
+    .sticky-header thead th {
+      position: sticky; 
+      top: 0; 
+      z-index: 1; 
+      background: #f5fbf5;
+    }
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
   </style>
 </head>
 
 <body>
 
+<<<<<<< HEAD
   <!-- ===== TOP NAVBAR ===== -->
+=======
+  <!-- ===== MEMBER TOP NAV ===== -->
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
   <header class="admin-topbar">
     <div class="container row">
       <button class="menu-toggle" aria-label="Menu">☰</button>
+
       <nav class="admin-nav" id="memberNav">
         <a class="active" href="member-dashboard.html">Dashboard</a>
         <a href="member-contributions.html">Contributions</a>
@@ -48,12 +102,19 @@
     </div>
   </header>
 
+<<<<<<< HEAD
   <!-- ===== PAGE CONTENT ===== -->
   <main class="admin-shell">
 
     <h1 class="page-title">Welcome</h1>
 
     <!-- STATS -->
+=======
+  <main class="admin-shell dashboard-wrap">
+    <h1 class="page-title center">Welcome</h1>
+
+    <!-- ===== KPIs ===== -->
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
     <section class="content-grid grid-4">
       <div class="card">
         <div class="card-header">Paid (EUR) — YTD</div>
@@ -84,14 +145,22 @@
         <div class="card-body">
           <div class="stat-big" id="arrearsYears">0 yrs</div>
           <div class="muted">
+<<<<<<< HEAD
             <span id="arrearsEUR">€0.00</span> ·
+=======
+            <span id="arrearsEUR">€0.00</span> · 
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
             <span id="arrearsGMD">D0.00</span>
           </div>
         </div>
       </div>
     </section>
 
+<<<<<<< HEAD
     <!-- ACCOUNT BOX -->
+=======
+    <!-- ===== ACCOUNT INFO ===== -->
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
     <section class="card mt-16">
       <div class="card-header">My Account</div>
       <div class="card-body">
@@ -101,7 +170,11 @@
       </div>
     </section>
 
+<<<<<<< HEAD
     <!-- QUICK LINKS -->
+=======
+    <!-- ===== QUICK LINKS ===== -->
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
     <section class="card mt-16">
       <div class="card-header">Quick Links</div>
       <div class="card-body">
@@ -114,20 +187,33 @@
       </div>
     </section>
 
+<<<<<<< HEAD
     <!-- Recent Contributions / Meetings -->
+=======
+    <!-- ===== RECENT CONTRIBUTIONS + MEETINGS ===== -->
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
     <section class="grid-2 mt-16">
 
       <div class="card">
         <div class="card-header row between">
           <span>Recent Contributions</span>
+<<<<<<< HEAD
           <a class="btn btn-light" href="member-contributions.html">View All</a>
+=======
+          <button class="btn btn-light">View All</button>
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
         </div>
         <div class="card-body">
           <div class="table-wrap sticky-header">
             <table class="table-mini">
               <thead>
                 <tr>
+<<<<<<< HEAD
                   <th>Receipt</th><th>Date</th><th>Plan</th><th>Method</th><th>EUR</th><th>GMD</th>
+=======
+                  <th>Receipt</th><th>Date</th><th>Plan</th>
+                  <th>Method</th><th>EUR</th><th>GMD</th>
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
                 </tr>
               </thead>
               <tbody id="recentContribTbody">
@@ -141,13 +227,23 @@
       <div class="card">
         <div class="card-header row between">
           <span>Recent Meetings</span>
+<<<<<<< HEAD
           <a class="btn btn-light" href="member-attendance.html">View All</a>
+=======
+          <button class="btn btn-light">View All</button>
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
         </div>
         <div class="card-body">
           <div class="table-wrap sticky-header">
             <table class="table-mini">
               <thead>
+<<<<<<< HEAD
                 <tr><th>ID</th><th>Date</th><th>Title / Notes</th><th>Status</th></tr>
+=======
+                <tr>
+                  <th>ID</th><th>Date</th><th>Title / Notes</th><th>Status</th>
+                </tr>
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
               </thead>
               <tbody id="recentMeetTbody">
                 <tr><td colspan="4" class="muted">Loading…</td></tr>
@@ -166,11 +262,17 @@
 
   <!-- ===== USER + LOGOUT HANDLING ===== -->
   <script type="module">
+<<<<<<< HEAD
     import { getUser } from "./js/nkd-bus.js";
 
     // Fill profile name in navbar + account box
     const u = getUser();
     if (u) {
+=======
+    // Fill user slot from storage
+    try {
+      const u = JSON.parse(localStorage.getItem("nkd_user") || "null");
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
       const slot = document.querySelector("[data-user-slot]");
       if (slot) slot.textContent = `${u.name || "Member"} • ${u.role || "member"}`;
 
@@ -179,6 +281,7 @@
       document.getElementById("myAccountPlan").textContent = u.plan     ?? "—";
     }
 
+<<<<<<< HEAD
     // Mobile menu toggle
     document.querySelector(".menu-toggle")?.addEventListener("click", () => {
       document.getElementById("memberNav").classList.toggle("active");
@@ -186,6 +289,15 @@
 
     // FULL WORKING LOGOUT
     document.getElementById("logoutLink")?.addEventListener("click", (e) => {
+=======
+    // Mobile nav toggle
+    const btn = document.querySelector(".menu-toggle");
+    const nav = document.getElementById("memberNav");
+    btn && nav && btn.addEventListener("click", () => nav.classList.toggle("active"));
+
+    // Logout
+    document.getElementById("logoutLink")?.addEventListener("click", (e)=>{
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
       e.preventDefault();
       try {
         localStorage.removeItem("nkd-user");
@@ -195,7 +307,10 @@
     });
   </script>
 
+<<<<<<< HEAD
   <!-- Dashboard Controller -->
+=======
+>>>>>>> 1c25477 (Updated member filtering + contribution pages)
   <script type="module" src="./js/member-dashboard.js"></script>
 
 </body>

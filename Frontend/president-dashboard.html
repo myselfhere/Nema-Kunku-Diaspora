@@ -1,27 +1,52 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>President Dashboard — Nema Kunku Diaspora</title>
-  <link rel="stylesheet" href="admin-style.css" />
+  <link rel="stylesheet" href="admin-style.css"/>
   <style>
-    .cards { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin:0 16px 18px; }
-    @media (max-width:1000px){ .cards{grid-template-columns:repeat(2,1fr);} }
-    @media (max-width:640px){ .cards{grid-template-columns:1fr;} }
-    .stat-big{font-size:28px;font-weight:900;color:#1b5e20;margin-bottom:4px;}
-    .muted{color:#6b7a6a;font-size:13px;}
-    .quick-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;}
+    .stats-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:16px;
+      margin-bottom:18px;
+    }
+    @media (max-width:1100px){
+      .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media (max-width:640px){
+      .stats-grid{grid-template-columns:1fr}
+    }
+    .stat-card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px 16px;
+    }
+    .stat-label{font-weight:800;color:#2f3a2f}
+    .stat-value{font-size:28px;font-weight:900;color:var(--green-900);margin-top:4px}
+    .stat-sub{color:var(--muted);font-size:12px}
+    .grid-two{
+      display:grid;
+      grid-template-columns:2fr 1.4fr;
+      gap:16px;
+      margin-bottom:18px;
+    }
+    @media (max-width:1024px){
+      .grid-two{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
-  <!-- NAVBAR -->
+  <!-- TOPBAR -->
   <header class="admin-topbar">
     <div class="container row">
       <button class="menu-toggle" aria-label="Menu">☰</button>
 
       <nav class="admin-nav" id="adminNav">
-        <a href="president-dashboard.html" data-key="dashboard" class="active">Dashboard</a>
+        <a href="president-dashboard.html" data-key="dashboard">Dashboard</a>
         <a href="admin-members.html" data-key="members">Members</a>
         <a href="admin-contributions.html" data-key="contributions">Contributions</a>
         <a href="admin-expenditures.html" data-key="expenditures">Expenditures</a>
@@ -31,237 +56,132 @@
       </nav>
 
       <div class="admin-user">
-        <span data-user-slot>President • President</span>
-        <a href="login.html" id="logoutLink">Logout</a>
+        <span data-user-slot>President • president</span>
+        <a href="#" id="logoutLink">Logout</a>
       </div>
     </div>
   </header>
 
+  <!-- MAIN -->
   <main class="admin-shell">
-    <h1 class="page-title">President Overview</h1>
+    <div class="container">
+      <h1 class="page-title">President Dashboard</h1>
 
-    <!-- KPIs -->
-    <section class="cards">
-      <div class="card">
-        <div class="card-header">TOTAL MEMBERS</div>
-        <div class="card-body">
-          <div class="stat-big" id="kpiMembers">0</div>
-          <div class="muted">Active registered members</div>
+      <!-- Quick actions -->
+      <section class="card" style="margin-bottom:16px">
+        <div class="card-header">Quick Actions</div>
+        <div class="card-body" style="display:flex;flex-wrap:wrap;gap:10px">
+          <a class="btn btn-primary" href="admin-members.html">View Members</a>
+          <a class="btn btn-secondary" href="admin-contributions.html">View Contributions</a>
+          <a class="btn btn-secondary" href="admin-expenditures.html">View Expenditures</a>
+          <a class="btn btn-secondary" href="admin-projects.html">View Projects</a>
+          <a class="btn btn-light" href="admin-meetings.html">Meetings & Attendance</a>
         </div>
-      </div>
-      <div class="card">
-        <div class="card-header">TOTAL CONTRIBUTIONS (EUR)</div>
-        <div class="card-body">
-          <div class="stat-big" id="kpiTotalEUR">€0</div>
-          <div class="muted">All recorded receipts</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header">TOTAL CONTRIBUTIONS (GMD)</div>
-        <div class="card-body">
-          <div class="stat-big" id="kpiTotalGMD">D0</div>
-          <div class="muted">All recorded receipts</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header">RECENT MEETINGS</div>
-        <div class="card-body">
-          <div class="stat-big" id="kpiMeetings">0</div>
-          <div class="muted">Last 6 months</div>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Recent activity -->
-    <section class="content-grid">
-      <div class="card">
-        <div class="card-header">Recent Contributions</div>
-        <div class="card-body">
-          <div class="table-wrap">
-            <table class="table-mini">
-              <thead>
+      <!-- KPIs -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Members</div>
+          <div class="stat-value" id="kpiMembers">0</div>
+          <div class="stat-sub">Active + pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Contributions (EUR) — YTD</div>
+          <div class="stat-value" id="kpiContribEUR">€0.00</div>
+          <div class="stat-sub">All members this year</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Expenditures (GMD) — YTD</div>
+          <div class="stat-value" id="kpiExpGMD">D0.00</div>
+          <div class="stat-sub">All projects & admin costs</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Projects (Active)</div>
+          <div class="stat-value" id="kpiActiveProjects">0</div>
+          <div class="stat-sub"><span id="kpiTotalProjects">0</span> total projects</div>
+        </div>
+      </section>
+
+      <!-- Second row KPIs -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Meetings Logged</div>
+          <div class="stat-value" id="kpiMeetings">0</div>
+          <div class="stat-sub">General + emergency meetings</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Net Position — YTD (EUR)</div>
+          <div class="stat-value" id="kpiNetEUR">€0.00</div>
+          <div class="stat-sub">Contributions − Expenditures</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Net Position — YTD (GMD)</div>
+          <div class="stat-value" id="kpiNetGMD">D0.00</div>
+          <div class="stat-sub">Converted totals</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Year</div>
+          <div class="stat-value" id="kpiYear"></div>
+          <div class="stat-sub">Reporting year in view</div>
+        </div>
+      </section>
+
+      <!-- Tables -->
+      <section class="grid-two">
+        <!-- Recent contributions -->
+        <section class="card">
+          <div class="card-header">Recent Contributions</div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="table-mini">
+                <thead>
                 <tr>
-                  <th>Receipt</th>
                   <th>Date</th>
                   <th>Member</th>
-                  <th>Plan</th>
-                  <th>EUR</th>
-                  <th>GMD</th>
+                  <th>Receipt</th>
+                  <th class="right">EUR</th>
+                  <th class="right">GMD</th>
                 </tr>
-              </thead>
-              <tbody id="recentContribTbody">
-                <tr><td colspan="6" class="muted">Loading…</td></tr>
-              </tbody>
-            </table>
+                </thead>
+                <tbody id="tblContribBody">
+                  <tr><td colspan="5" class="muted">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <div class="card info-panel">
-        <div class="card-header">Recent Meetings</div>
-        <div class="card-body">
-          <div class="table-wrap">
-            <table class="table-mini">
-              <thead>
+        <!-- Recent projects / expenditures -->
+        <section class="card">
+          <div class="card-header">Recent Expenditures & Projects</div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="table-mini">
+                <thead>
                 <tr>
-                  <th>ID</th>
                   <th>Date</th>
-                  <th>Topic</th>
-                  <th>Attendance Logged</th>
+                  <th>Ref / Project</th>
+                  <th>Category / Status</th>
+                  <th class="right">EUR</th>
+                  <th class="right">GMD</th>
                 </tr>
-              </thead>
-              <tbody id="recentMeetTbody">
-                <tr><td colspan="4" class="muted">Loading…</td></tr>
-              </tbody>
-            </table>
+                </thead>
+                <tbody id="tblExpBody">
+                  <tr><td colspan="5" class="muted">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-
-          <div class="quick-links">
-            <a href="admin-meetings.html" class="btn btn-secondary">View all meetings</a>
-            <a href="admin-projects.html" class="btn btn-secondary">View projects</a>
-          </div>
-        </div>
-      </div>
-    </section>
+        </section>
+      </section>
+    </div>
   </main>
 
   <footer class="admin-footer">
-    © 2025 <strong>Nema Kunku Diaspora</strong> — President Panel
+    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
   </footer>
 
-  <!-- JS: nav + data -->
-  <script type="module">
-    import {
-      api,
-      fmtEUR,
-      fmtGMD,
-      toYYYYMMDD,
-      getUser,
-      clearUser,
-      requireRole,
-    } from "./js/nkd-bus.js";
-
-    // Only President
-    requireRole(["president"]);
-
-    const $  = (s) => document.querySelector(s);
-    const n  = (v) => Number(v || 0);
-
-    // user pill + logout
-    const u = getUser();
-    const pill = document.querySelector("[data-user-slot]");
-    if (pill && u) {
-      pill.textContent = `${u.name || u.email || "President"} • ${(u.role || "president")}`;
-    }
-    const logoutLink = $("#logoutLink");
-    if (logoutLink) {
-      logoutLink.addEventListener("click", (e) => {
-        e.preventDefault();
-        clearUser();
-        location.href = "login.html";
-      });
-    }
-
-    async function loadDashboard(){
-      // members, contributions, meetings
-      const [members, contribsRaw, meetingsRaw] = await Promise.all([
-        api.getMembers().catch(()=>[]),
-        api.getContributions().catch(()=>[]),
-        api.getMeetings().catch(()=>[]),
-      ]);
-
-      const contribs = Array.isArray(contribsRaw) ? contribsRaw : (contribsRaw.items || []);
-      const meetings = Array.isArray(meetingsRaw) ? meetingsRaw : (meetingsRaw.items || []);
-
-      // KPIs
-      $("#kpiMembers") && ($("#kpiMembers").textContent = String(members.length));
-
-      const totalEUR = contribs.reduce((sum,c)=>{
-        if (c.amountEUR != null) return sum + n(c.amountEUR);
-        if ((c.currency||"") === "EUR") return sum + n(c.amount);
-        return sum;
-      },0);
-
-      const totalGMD = contribs.reduce((sum,c)=>{
-        if (c.amountGMD != null) return sum + n(c.amountGMD);
-        if ((c.currency||"") === "GMD") return sum + n(c.amount);
-        return sum;
-      },0);
-
-      $("#kpiTotalEUR") && ($("#kpiTotalEUR").textContent = fmtEUR(totalEUR));
-      $("#kpiTotalGMD") && ($("#kpiTotalGMD").textContent = fmtGMD(totalGMD));
-
-      const now = new Date();
-      const sixMonthsAgo = new Date(now);
-      sixMonthsAgo.setMonth(now.getMonth() - 6);
-      const recentMeetCount = meetings.filter(m => {
-        const d = new Date(m.date || 0);
-        return !Number.isNaN(d) && d >= sixMonthsAgo;
-      }).length;
-      $("#kpiMeetings") && ($("#kpiMeetings").textContent = String(recentMeetCount));
-
-      // Recent contributions table
-      const rcBody = $("#recentContribTbody");
-      if (rcBody) {
-        rcBody.innerHTML = "";
-        const recent = [...contribs]
-          .sort((a,b)=>new Date(b.date||0)-new Date(a.date||0))
-          .slice(0,5);
-
-        if (!recent.length) {
-          rcBody.innerHTML = `<tr><td colspan="6" class="muted">No contributions recorded yet.</td></tr>`;
-        } else {
-          for (const c of recent) {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${c.receipt || c.id || "-"}</td>
-              <td>${toYYYYMMDD(c.date) || "-"}</td>
-              <td>${c.memberName || c.member || "-"}</td>
-              <td>${c.plan || c.contributionPlan || "-"}</td>
-              <td>${c.amountEUR != null ? fmtEUR(c.amountEUR) : "—"}</td>
-              <td>${c.amountGMD != null ? fmtGMD(c.amountGMD) : "—"}</td>
-            `;
-            rcBody.appendChild(tr);
-          }
-        }
-      }
-
-      // Recent meetings table
-      const rmBody = $("#recentMeetTbody");
-      if (rmBody) {
-        rmBody.innerHTML = "";
-        const recentM = [...meetings]
-          .sort((a,b)=>new Date(b.date||0)-new Date(a.date||0))
-          .slice(0,5);
-
-        if (!recentM.length) {
-          rmBody.innerHTML = `<tr><td colspan="4" class="muted">No meetings recorded.</td></tr>`;
-        } else {
-          for (const m of recentM) {
-            const tr = document.createElement("tr");
-            const hasAtt = Array.isArray(m.attendance) && m.attendance.length > 0;
-            tr.innerHTML = `
-              <td>${m.meetingId || m.id || "-"}</td>
-              <td>${toYYYYMMDD(m.date) || "-"}</td>
-              <td>${m.topic || m.notes || "-"}</td>
-              <td>${hasAtt ? "Yes" : "No"}</td>
-            `;
-            rmBody.appendChild(tr);
-          }
-        }
-      }
-    }
-
-    // Mobile menu
-    const menuBtn = document.querySelector(".menu-toggle");
-    const nav = document.getElementById("adminNav");
-    if (menuBtn && nav) {
-      menuBtn.addEventListener("click", () => {
-        nav.classList.toggle("active");
-      });
-    }
-
-    document.addEventListener("DOMContentLoaded", loadDashboard);
-  </script>
+  <script type="module" src="js/president-dashboard.js"></script>
 </body>
 </html>

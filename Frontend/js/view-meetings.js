@@ -72,10 +72,10 @@ let selectedMemberId = null;
   allMembers = loadLS(LS_MEMBERS);
 
   // build member dropdown
-  const memberSel = $('memberFilter');
-  memberSel.innerHTML = `<option value="">All Members</option>` +
+  const memberSelect = $('memberFilter');
+  memberSelect.innerHTML = `<option value="">All Members</option>` +
     allMembers.map(m => `<option value="${m.memberId}">${m.name} (${m.memberId})</option>`).join('');
-  if (selectedMemberId) memberSel.value = selectedMemberId;
+  if (selectedMemberId) memberSelect.value = selectedMemberId;
 
   // set context title if a member is pre-selected
   if (selectedMemberId) {
@@ -88,8 +88,8 @@ let selectedMemberId = null;
 
   // listeners
   $('typeFilter').addEventListener('change', applyFilters);
-  memberSel.addEventListener('change', () => {
-    selectedMemberId = memberSel.value || '';
+  memberSelect.addEventListener('change', () => {
+    selectedMemberId = memberSelect.value || '';
     applyFilters();
   });
   $('fromDate').addEventListener('input', applyFilters);

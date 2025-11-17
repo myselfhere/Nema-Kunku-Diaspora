@@ -1,35 +1,36 @@
 // Frontend/js/admin-contributions.js
-// Contributions list page — fixed imports + full render/filter/pager/CSV/delete
+// Contributions list page — render / filter / pager / CSV / delete
 
 import { api, activeNav } from "./nkd-bus.js";
 
 /* ---------------- Helpers ---------------- */
 const $ = (s) => document.querySelector(s);
 const n = (v) => Number(v || 0);
+
 const fmtEUR = (v) => `€${n(v).toFixed(2)}`;
-const fmtGMD = (v) => `D${n(v).toFixed(2)}`;
+const fmtGMD = (v) => `D${n(v).toFixed(0)}`; // remove decimals from GMD
+
 const toYYYYMMDD = (v) => {
+  if (!v) return "-";
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return "-";
-  const mm = String(d.getMonth()+1).padStart(2,"0");
-  const dd = String(d.getDate()).padStart(2,"0");
-  return `${d.getFullYear()}-${mm}-${dd}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 };
+
 const toDDMMYYYY = (v) => {
+  if (!v) return "-";
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return "-";
-  const dd = String(d.getDate()).padStart(2,"0");
-  const mm = String(d.getMonth()+1).padStart(2,"0");
-  return `${dd}/${mm}/${d.getFullYear()}`;
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
 };
 
 /* ---------------- State ---------------- */
-let all = [];        // all contributions from API
-let filtered = [];   // after filters
+let all = [];
+let filtered = [];
 let page = 1;
 const PAGE_SIZE = 25;
 
-/* ---------------- DOM ---------------- */
+/* ---------------- DOM refs ---------------- */
 const els = {
   statCount: $("#statCount"),
   statEUR: $("#statEUR"),
@@ -48,157 +49,173 @@ const els = {
   pageInfo: $("#pageInfo"),
 };
 
-/* ---------------- Core ---------------- */
-function computeStats(list){
-  const totalCount = list.length;
-  const sumEUR = list.reduce((s,c)=> s + (n(c.amountEUR) || ((c.currency||"") === "EUR" ? n(c.amount) : 0)), 0);
-  const sumGMD = list.reduce((s,c)=> s + (n(c.amountGMD) || ((c.currency||"") === "GMD" ? n(c.amount) : 0)), 0);
-  const y = els.year?.value ? Number(els.year.value) : null;
-  const yearCount = y ? list.filter(c => new Date(c.date).getFullYear() === y).length : 0;
+/* ---------------- Stats ---------------- */
+function computeStats(list) {
+  const total = list.length;
 
-  if (els.statCount) els.statCount.textContent = String(totalCount);
+  const sumEUR = list.reduce((s, c) => s + n(c.amountEUR), 0);
+  const sumGMD = list.reduce((s, c) => s + n(c.amountGMD), 0);
+
+  const y = els.year?.value ? Number(els.year.value) : null;
+  const yearCount = y
+    ? list.filter((c) => new Date(c.date).getFullYear() === y).length
+    : 0;
+
+  if (els.statCount) els.statCount.textContent = total;
   if (els.statEUR) els.statEUR.textContent = fmtEUR(sumEUR);
   if (els.statGMD) els.statGMD.textContent = fmtGMD(sumGMD);
-  if (els.statYearCount) els.statYearCount.textContent = String(yearCount);
+  if (els.statYearCount) els.statYearCount.textContent = yearCount;
 }
 
-function applyFilters(){
+/* ---------------- Filter + Render ---------------- */
+function applyFilters() {
   const q = (els.q?.value || "").toLowerCase().trim();
   const yr = els.year?.value;
   const pl = (els.plan?.value || "").toLowerCase();
   const md = (els.method?.value || "").toLowerCase();
 
-  filtered = all.filter(c => {
-    const text = `${c.memberName||""} ${c.memberId||""} ${c.receipt||c.id||""}`.toLowerCase();
-    const okQ = !q || text.includes(q);
+  filtered = all.filter((c) => {
+    const text = `${c.memberName} ${c.memberId} ${c.receiptNumber}`.toLowerCase();
 
-    const okY = !yr || (new Date(c.date).getFullYear() === Number(yr));
-    const okP = !pl || (String(c.plan||c.contributionPlan||"").toLowerCase().includes(pl));
-    const okM = !md || (String(c.method||"").toLowerCase() === md);
+    if (q && !text.includes(q)) return false;
 
-    return okQ && okY && okP && okM;
+    if (yr) {
+      const d = new Date(c.date);
+      if (d.getFullYear() !== Number(yr)) return false;
+    }
+
+    if (pl && !(c.plan || "").toLowerCase().includes(pl)) return false;
+
+    if (md && (c.method || "").toLowerCase() !== md) return false;
+
+    return true;
   });
 
   page = 1;
   render();
 }
 
-function render(){
+function render() {
   computeStats(filtered);
 
-  // table rows
   if (!els.tbody) return;
   els.tbody.innerHTML = "";
-  const start = (page-1)*PAGE_SIZE;
-  const end   = Math.min(start+PAGE_SIZE, filtered.length);
-  const slice = filtered.slice(start, end);
 
-  if (!slice.length){
+  const start = (page - 1) * PAGE_SIZE;
+  const slice = filtered.slice(start, start + PAGE_SIZE);
+
+  if (!slice.length) {
     els.tbody.innerHTML = `<tr><td colspan="9" class="muted">No contributions yet.</td></tr>`;
   } else {
-    for (const c of slice){
+    for (const c of slice) {
+      const id = c._id || c.id || "";
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${c.receipt || c.id || "-"}</td>
+        <td>${c.receiptNumber}</td>
         <td>${toDDMMYYYY(c.date)}</td>
-        <td>${c.memberName || "-"}</td>
-        <td>${c.memberId || "-"}</td>
-        <td>${c.plan || c.contributionPlan || "-"}</td>
-        <td>${c.method || "-"}</td>
-        <td>${n(c.amountEUR) ? fmtEUR(c.amountEUR) : "—"}</td>
-        <td>${n(c.amountGMD) ? fmtGMD(c.amountGMD) : "—"}</td>
+        <td>${c.memberName}</td>
+        <td>${c.memberId}</td>
+        <td>${c.plan}</td>
+        <td>${c.method}</td>
+        <td>${fmtEUR(c.amountEUR)}</td>
+        <td>${fmtGMD(c.amountGMD)}</td>
         <td class="right">
-          <a class="btn btn-small" href="admin-contribution-view.html?id=${encodeURIComponent(c._id||c.id||"")}">View</a>
-          <button class="btn btn-small btn-danger" data-del="${c._id||c.id||""}">Delete</button>
+          <a class="btn btn-small" href="admin-contribution-view.html?id=${id}">View</a>
+          <button class="btn btn-small btn-danger" data-del="${id}">Delete</button>
         </td>
       `;
       els.tbody.appendChild(tr);
     }
   }
 
-  // pager
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  if (els.pageInfo) els.pageInfo.textContent = `Page ${Math.min(page,pages)} of ${pages}`;
-  if (els.prev) els.prev.disabled = page <= 1;
-  if (els.next) els.next.disabled = end >= filtered.length || filtered.length === 0;
+  els.pageInfo.textContent = `Page ${page} of ${pages}`;
+  els.prev.disabled = page <= 1;
+  els.next.disabled = page >= pages;
 
-  // wire delete buttons
-  els.tbody.querySelectorAll("[data-del]").forEach(btn=>{
-    btn.addEventListener("click", async (e)=>{
-      const id = e.currentTarget.getAttribute("data-del");
-      if (!id) return;
+  document.querySelectorAll("[data-del]").forEach((btn) => {
+    btn.onclick = async () => {
+      const id = btn.getAttribute("data-del");
       if (!confirm("Delete this contribution?")) return;
-      try{
-        await api.del(`/contributions/${encodeURIComponent(id)}`);
-        // remove from state + rerender fast
-        all = all.filter(x => (x._id||x.id) !== id);
-        applyFilters();
-      }catch(err){
-        console.error("Delete failed", err);
-        alert("Failed to delete contribution.");
-      }
-    });
+      await api.del(`/contributions/${id}`);
+      all = all.filter((x) => x._id !== id);
+      applyFilters();
+    };
   });
 }
 
-/* -------------- CSV -------------- */
-function exportCSV(){
-  const headers = ["Receipt","Date","Member","Member ID","Plan","Method","EUR","GMD"];
-  const rows = filtered.map(c => [
-    c.receipt || c.id || "",
+/* ---------------- CSV export ---------------- */
+function exportCSV() {
+  const headers = [
+    "Receipt",
+    "Date",
+    "Member",
+    "Member ID",
+    "Plan",
+    "Method",
+    "EUR",
+    "GMD",
+  ];
+
+  const rows = filtered.map((c) => [
+    c.receiptNumber,
     toYYYYMMDD(c.date),
-    c.memberName || "",
-    c.memberId || "",
-    c.plan || c.contributionPlan || "",
-    c.method || "",
-    n(c.amountEUR) ? n(c.amountEUR).toFixed(2) : "",
-    n(c.amountGMD) ? n(c.amountGMD).toFixed(2) : "",
+    c.memberName,
+    c.memberId,
+    c.plan,
+    c.method,
+    c.amountEUR,
+    c.amountGMD,
   ]);
-  const csv = [headers, ...rows].map(r => r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
-  const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
+
+  const csv = [headers, ...rows]
+    .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");
-  a.href = url; a.download = "contributions.csv";
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
+  a.href = URL.createObjectURL(blob);
+  a.download = "contributions.csv";
+  a.click();
 }
 
-/* -------------- Load -------------- */
-async function load(){
+/* ---------------- Load ---------------- */
+async function load() {
   activeNav("contributions");
 
-  try{
-    const res = await api.get("/contributions?page=1&limit=1000");
-    all = Array.isArray(res?.items) ? res.items : (Array.isArray(res)?res:[]);
-  }catch(err){
-    console.error("Load contributions failed:", err);
-    all = [];
-  }
+  const res = await api.get("/contributions?page=1&limit=10000");
+  all = res.items || res;
 
-  // Fill year dropdown from data
-  if (els.year){
-    const years = Array.from(
-      new Set(all.map(c => new Date(c.date).getFullYear()).filter(y => !Number.isNaN(y)))
-    ).sort((a,b)=>b-a);
-    // keep "All years" first
-    els.year.innerHTML = `<option value="">All years</option>` + years.map(y=>`<option>${y}</option>`).join("");
-  }
+  const years = [...new Set(all.map((c) => new Date(c.date).getFullYear()))].sort(
+    (a, b) => b - a
+  );
+
+  els.year.innerHTML =
+    `<option value="">All years</option>` +
+    years.map((y) => `<option>${y}</option>`).join("");
 
   filtered = all.slice();
   render();
 }
 
-/* -------------- Events -------------- */
+/* ---------------- Events ---------------- */
 document.addEventListener("DOMContentLoaded", () => {
-  els.q?.addEventListener("input", applyFilters);
-  els.year?.addEventListener("change", applyFilters);
-  els.plan?.addEventListener("change", applyFilters);
-  els.method?.addEventListener("change", applyFilters);
+  els.q.addEventListener("input", applyFilters);
+  els.year.addEventListener("change", applyFilters);
+  els.plan.addEventListener("change", applyFilters);
+  els.method.addEventListener("change", applyFilters);
+  els.exportBtn.addEventListener("click", exportCSV);
 
-  els.exportBtn?.addEventListener("click", exportCSV);
+  els.prev.addEventListener("click", () => {
+    if (page > 1) page--;
+    render();
+  });
 
-  els.prev?.addEventListener("click", ()=>{ page = Math.max(1, page-1); render(); });
-  els.next?.addEventListener("click", ()=>{ page += 1; render(); });
+  els.next.addEventListener("click", () => {
+    page++;
+    render();
+  });
 
   load();
 });

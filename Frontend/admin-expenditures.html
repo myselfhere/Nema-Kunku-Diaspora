@@ -5,30 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Expenditures — Admin</title>
   <link rel="stylesheet" href="admin-style.css" />
-  <style>
-    .mt-16 { margin-top: 16px; }
-    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-    @media (max-width: 1100px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 640px) { .grid-4 { grid-template-columns: 1fr; } }
-    .toolbar { display: grid; grid-template-columns: 1fr 160px 180px 160px auto; gap: 12px; align-items: center; }
-    @media (max-width: 900px) { .toolbar { grid-template-columns: 1fr 1fr; gap: 10px; } }
-    .sticky-header thead th { position: sticky; top: 0; z-index: 1; background: #f5fbf5; }
-  </style>
 </head>
 <body>
-  <!-- NAVBAR -->
+  <!-- TOPBAR -->
   <header class="admin-topbar">
     <div class="container row">
       <button class="menu-toggle" aria-label="Menu">☰</button>
+
       <nav class="admin-nav" id="adminNav">
         <a href="admin-dashboard.html">Dashboard</a>
         <a href="admin-members.html">Members</a>
         <a href="admin-contributions.html">Contributions</a>
-        <a class="active" href="admin-expenditures.html">Expenditures</a>
+        <a href="admin-expenditures.html" class="active">Expenditures</a>
         <a href="admin-projects.html">Projects</a>
         <a href="admin-meetings.html">Meetings</a>
         <a href="admin-settings.html">Settings</a>
       </nav>
+
       <div class="admin-user">
         <span data-user-slot>Offline Admin • admin</span>
         <a href="login.html">Logout</a>
@@ -36,122 +29,119 @@
     </div>
   </header>
 
+  <!-- MAIN -->
   <main class="admin-shell">
-    <h1 class="page-title">Expenditures</h1>
+    <h1 class="page-title">Expenditure Records / History</h1>
 
-    <!-- ===== STATS ===== -->
-    <section class="content-grid grid-4">
-      <div class="card">
-        <div class="card-header">TOTAL RECORDS</div>
-        <div class="card-body">
-          <div class="stat-big" id="statCount">0</div>
-          <div class="muted">All recorded expenditures</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header">TOTAL (EUR)</div>
-        <div class="card-body">
-          <div class="stat-big" id="statEUR">€0</div>
-          <div class="muted">Sum of amounts in EUR</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header">TOTAL (GMD)</div>
-        <div class="card-body">
-          <div class="stat-big" id="statGMD">D0</div>
-          <div class="muted">Sum of amounts in GMD</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header">THIS YEAR</div>
-        <div class="card-body">
-          <div class="stat-big" id="statYearCount">0</div>
-          <div class="muted">Records in selected year</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== FIND & FILTER ===== -->
-    <section class="card mt-16">
-      <div class="card-header">Find & Filter</div>
+    <!-- FIND & FILTER -->
+    <section class="card">
+      <div class="card-header">Find &amp; Filter</div>
       <div class="card-body">
-        <div class="toolbar">
-          <input id="q" placeholder="Search payee, ref, description…" />
-          <select id="year"><option value="">All years</option></select>
-          <select id="category">
-            <option value="">All categories</option>
-            <option>Operations</option>
-            <option>Project</option>
-            <option>Logistics</option>
-            <option>Fees</option>
-            <option>Other</option>
-          </select>
-          <select id="method">
-            <option value="">All methods</option>
-            <option>Cash</option>
-            <option>Bank Transfer</option>
-            <option>Card</option>
-            <option>Mobile Money</option>
-            <option>Other</option>
-          </select>
-          <div class="right">
-            <a class="btn btn-primary" href="admin-expenditure-add.html">+ Add Expenditure</a>
-            <a class="btn btn-secondary" id="exportBtn">Export CSV</a>
+        <div class="filter-grid">
+          <div class="form-group">
+            <label for="searchInput">Search</label>
+            <input
+              type="text"
+              id="searchInput"
+              class="form-control"
+              placeholder="Search reference, payee, description..."
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="yearFilter">Year</label>
+            <select id="yearFilter" class="form-control">
+              <option value="">All years</option>
+              <!-- You can add static years or fill this with JS later -->
+              <option value="2018">2018</option>
+              <option value="2019">2019</option>
+              <option value="2020">2020</option>
+              <option value="2021">2021</option>
+              <option value="2022">2022</option>
+              <option value="2023">2023</option>
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="categoryFilter">Category</label>
+            <select id="categoryFilter" class="form-control">
+              <option value="">All categories</option>
+              <option value="project">Project</option>
+              <option value="meeting">Meeting</option>
+              <option value="admin">Admin</option>
+              <option value="funeral">Funeral Support</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="methodFilter">Payment Method</label>
+            <select id="methodFilter" class="form-control">
+              <option value="">All methods</option>
+              <option value="cash">Cash</option>
+              <option value="bank">Bank</option>
+              <option value="wave">Wave</option>
+              <option value="bizum">Bizum</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group actions-group">
+            <a href="admin-expenditure-add.html" class="btn btn-primary">
+              + Add Expenditure
+            </a>
+            <button type="button" id="exportBtn" class="btn btn-outline">
+              Export CSV
+            </button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ===== TABLE ===== -->
+    <!-- TABLE -->
     <section class="card mt-16">
       <div class="card-header">All Expenditures</div>
       <div class="card-body">
-        <div class="table-wrap sticky-header">
-          <table class="table-mini">
+        <div class="table-wrap">
+          <table class="table">
             <thead>
               <tr>
-                <th>Ref</th>
+                <th>Reference</th>
                 <th>Date</th>
                 <th>Payee</th>
-                <th>Description</th>
                 <th>Category</th>
                 <th>Method</th>
                 <th>EUR</th>
                 <th>GMD</th>
-                <th class="right">Actions</th>
+                <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="expTbody">
-              <tr><td colspan="9" class="muted">Loading…</td></tr>
+            <tbody id="expendituresTbody">
+              <tr>
+                <td colspan="8" class="muted">Loading...</td>
+              </tr>
             </tbody>
           </table>
         </div>
 
-        <div class="pager center mt-16">
-          <button class="btn btn-light" id="prev">Prev</button>
-          <span id="pageInfo" class="muted">Page 1 of 1</span>
-          <button class="btn btn-light" id="next">Next</button>
+        <!-- PAGER -->
+        <div class="pager" id="pager">
+          <button type="button" class="btn btn-light" data-prev>Prev</button>
+          <span id="pageInfo" class="pager-info">Page 1 of 1</span>
+          <button type="button" class="btn btn-light" data-next>Next</button>
         </div>
       </div>
     </section>
   </main>
 
+  <!-- FOOTER -->
   <footer class="admin-footer">
     © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
   </footer>
 
-  <!-- User + mobile menu -->
-  <script type="module">
-    import { getUser } from "./js/nkd-bus.js";
-    const u = getUser();
-    const slot = document.querySelector("[data-user-slot]");
-    slot && (slot.textContent = `${u?.name || "Offline Admin"} • ${u?.role || "admin"}`);
-    const btn = document.querySelector(".menu-toggle");
-    const nav = document.getElementById("adminNav");
-    btn && nav && btn.addEventListener("click", () => nav.classList.toggle("active"));
-  </script>
-
-  <!-- Controller -->
+  <!-- JS -->
   <script type="module" src="./js/admin-expenditures.js"></script>
 </body>
 </html>

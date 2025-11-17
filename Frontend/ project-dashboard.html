@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Project Dashboard — Nema Kunku Diaspora</title>
+  <link rel="stylesheet" href="admin-style.css"/>
+</head>
+<body>
+<header class="admin-topbar">
+  <div class="container row">
+    <button class="menu-toggle" aria-label="Menu">☰</button>
+    <nav class="admin-nav" id="adminNav">
+      <a href="project-dashboard.html" data-key="dashboard">Dashboard</a>
+      <a href="admin-projects.html" data-key="projects">Projects</a>
+      <a href="admin-expenditures.html" data-key="expenditures">Expenditures</a>
+      <a href="admin-settings.html" data-key="settings">Settings</a>
+    </nav>
+    <div class="admin-user">
+      <span data-user-slot>Project Manager • project-manager</span>
+      <a href="#" id="logoutLink">Logout</a>
+    </div>
+  </div>
+</header>
+
+<main class="admin-shell">
+  <div class="container">
+    <h1 class="page-title">Project Manager Dashboard</h1>
+
+    <section class="content-grid grid-4" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-header">Total Projects</div>
+        <div class="card-body">
+          <div class="stat-big" id="kpiTotal">0</div>
+          <div class="muted">All projects</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Active</div>
+        <div class="card-body">
+          <div class="stat-big" id="kpiActive">0</div>
+          <div class="muted">Ongoing projects</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Completed</div>
+        <div class="card-body">
+          <div class="stat-big" id="kpiDone">0</div>
+          <div class="muted">Marked as completed</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Budget vs Spent (EUR)</div>
+        <div class="card-body">
+          <div class="stat-big" id="kpiBudget">€0.00</div>
+          <div class="muted">Planned vs used for active projects</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-bottom:16px">
+      <div class="card-header">Quick Actions</div>
+      <div class="card-body" style="display:flex;flex-wrap:wrap;gap:10px">
+        <a class="btn btn-primary" href="admin-projects.html">Create / Edit Project</a>
+        <a class="btn btn-secondary" href="admin-expenditures.html">Project Expenditures</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">Recent Projects</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="table-mini">
+            <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Start</th>
+              <th>End</th>
+              <th class="right">Budget EUR</th>
+              <th class="right">Spent EUR</th>
+            </tr>
+            </thead>
+            <tbody id="tblProjBody">
+            <tr><td colspan="7" class="muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="admin-footer">
+  © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+</footer>
+
+<script type="module" src="js/project-dashboard.js"></script>
+</body>
+</html>

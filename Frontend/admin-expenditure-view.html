@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>View Contribution — Admin</title>
+  <title>View Expenditure — Admin</title>
   <link rel="stylesheet" href="admin-style.css" />
   <style>
     .detail-grid {display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -18,8 +18,8 @@
       <nav class="admin-nav" id="adminNav">
         <a href="admin-dashboard.html">Dashboard</a>
         <a href="admin-members.html">Members</a>
-        <a href="admin-contributions.html" class="active">Contributions</a>
-        <a href="admin-expenditures.html">Expenditures</a>
+        <a href="admin-contributions.html">Contributions</a>
+        <a href="admin-expenditures.html" class="active">Expenditures</a>
         <a href="admin-projects.html">Projects</a>
         <a href="admin-meetings.html">Meetings</a>
         <a href="admin-settings.html">Settings</a>
@@ -32,25 +32,32 @@
   </header>
 
   <main class="admin-shell">
-    <h1 class="page-title">Contribution Details</h1>
+    <h1 class="page-title">Expenditure Details</h1>
 
     <section class="card">
-      <div class="card-header">Receipt Information</div>
+      <div class="card-header">Payment Information</div>
       <div class="card-body">
         <div id="detailWrap" class="detail-grid">
-          <div><span class="label">Receipt:</span> <span id="receipt"></span></div>
+          <div><span class="label">Reference:</span> <span id="reference"></span></div>
           <div><span class="label">Date:</span> <span id="date"></span></div>
-          <div><span class="label">Member Name:</span> <span id="memberName"></span></div>
-          <div><span class="label">Member ID:</span> <span id="memberId"></span></div>
-          <div><span class="label">Contribution Plan:</span> <span id="plan"></span></div>
+
+          <div><span class="label">Payee:</span> <span id="payee"></span></div>
+          <div><span class="label">Category:</span> <span id="category"></span></div>
+
           <div><span class="label">Payment Method:</span> <span id="method"></span></div>
+          <div><span class="label">Paid By:</span> <span id="paidBy"></span></div>
+
           <div><span class="label">Amount (EUR):</span> <span id="amountEUR"></span></div>
           <div><span class="label">Amount (GMD):</span> <span id="amountGMD"></span></div>
-          <div><span class="label">Position:</span> <span id="position"></span></div>
-          <div><span class="label">Confirmed By:</span> <span id="confirmedBy"></span></div>
+
           <div style="grid-column:1/-1">
-            <span class="label">Remarks:</span><br>
-            <span id="remarks"></span>
+            <span class="label">Description:</span><br>
+            <span id="description"></span>
+          </div>
+
+          <div style="grid-column:1/-1">
+            <span class="label">Comments / Remarks:</span><br>
+            <span id="comments"></span>
           </div>
         </div>
       </div>
@@ -58,7 +65,7 @@
 
     <section class="card mt-16">
       <div class="card-body right">
-        <a class="btn btn-light" href="admin-contributions.html">← Back to List</a>
+        <a class="btn btn-light" href="admin-expenditures.html">← Back to List</a>
       </div>
     </section>
   </main>
@@ -86,7 +93,7 @@
       btn.addEventListener("click", () => nav.classList.toggle("active"));
     }
 
-    // Query string ?id=...
+    // Get ?id=... from URL
     const params = new URLSearchParams(location.search);
     const id = params.get("id");
 
@@ -105,35 +112,34 @@
       document.getElementById("detailWrap").innerHTML =
         "<p class='muted'>No record ID provided.</p>";
     } else {
-      // nkd-bus base already includes /api, so just "contributions/:id"
-      get("contributions/" + encodeURIComponent(id))
+      // Base in nkd-bus already has /api – so just "expenditures/:id"
+      get("expenditures/" + encodeURIComponent(id))
         .then(function (res) {
-          // Your route returns { ok, data }
+          // If router returns { ok, data }, unwrap it
           var r = res && res.data ? res.data : res;
 
-          // Map backend fields directly
-          var receipt      = r.receiptNumber || "";
-          var memberName   = r.memberName    || "";
-          var memberId     = r.memberId      || "";
-          var plan         = r.plan          || r.contributionPlan || "";
-          var method       = r.method        || r.paymentMethod    || "";
-          var eur          = (r.amountEUR != null ? r.amountEUR : 0);
-          var gmd          = (r.amountGMD != null ? r.amountGMD : 0);
-          var position     = r.position      || "";
-          var confirmedBy  = r.confirmedBy   || "";
-          var remarks      = r.remarks       || "";
+          // Field mapping (backend → UI)
+          var reference   = r.referenceNumber || r.refNumber || r.ref || "";
+          var date        = dstr(r.date);
+          var payee       = r.payee || r.vendor || "";
+          var category    = r.category || r.type || "";
+          var method      = r.paymentMethod || r.method || "";
+          var paidBy      = r.paidBy || r.approvedBy || "";
+          var eur         = (r.amountEUR != null ? r.amountEUR : 0);
+          var gmd         = (r.amountGMD != null ? r.amountGMD : 0);
+          var description = r.description || r.details || "";
+          var comments    = r.comments || r.remarks || "";
 
-          document.getElementById("receipt").textContent     = receipt;
-          document.getElementById("date").textContent        = dstr(r.date);
-          document.getElementById("memberName").textContent  = memberName;
-          document.getElementById("memberId").textContent    = memberId;
-          document.getElementById("plan").textContent        = plan;
+          document.getElementById("reference").textContent   = reference;
+          document.getElementById("date").textContent        = date;
+          document.getElementById("payee").textContent       = payee;
+          document.getElementById("category").textContent    = category;
           document.getElementById("method").textContent      = method;
+          document.getElementById("paidBy").textContent      = paidBy;
           document.getElementById("amountEUR").textContent   = "€" + eur;
           document.getElementById("amountGMD").textContent   = "D" + gmd;
-          document.getElementById("position").textContent    = position;
-          document.getElementById("confirmedBy").textContent = confirmedBy;
-          document.getElementById("remarks").textContent     = remarks;
+          document.getElementById("description").textContent = description;
+          document.getElementById("comments").textContent    = comments;
         })
         .catch(function () {
           document.getElementById("detailWrap").innerHTML =

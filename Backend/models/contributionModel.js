@@ -1,57 +1,104 @@
-import mongoose from "mongoose";
-import { getNextSeq } from "./Counter.js";
+// Backend/models/contributionModel.js
+const mongoose = require('mongoose');
 
 const contributionSchema = new mongoose.Schema(
   {
-    // Core
-    receiptNumber: { type: String, unique: true }, // REC-0001
-    date: { type: Date, required: true },
-
-    // Member link (denormalized for fast lists)
-    memberId: { type: String, required: true, index: true }, // NKD###
-    memberName: { type: String, required: true },
-
-    // Amounts
-    amountEUR: { type: Number, default: 0 },
-    amountGMD: { type: Number, default: 0 },
-    rate: { type: Number, default: 75 }, // GMD per €
-
-    // Meta
-    plan: {
+    receiptNumber: {
       type: String,
-      enum: ["Monthly", "Quarterly", "Annually", "Yearly", "None"],
-      default: "Annually",
+      unique: true,
     },
-    method: {
+
+    date: {
+      type: Date,
+      required: true,
+    },
+
+    memberId: {
       type: String,
-      enum: ["Cash", "Bank", "Wave", "Transfer", "Other"],
-      default: "Cash",
-      index: true,
+      required: true,
     },
-    position: { type: String, default: "" },     // member position (optional)
-    confirmedBy: { type: String, default: "" },  // staff confirming
-    remarks: { type: String, default: "" },
-    createdBy: { type: String, default: "" },    // admin email or id
+
+    memberName: {
+      type: String,
+      required: true,
+    },
+
+    contributionPlan: {
+      type: String,
+      enum: ['Annually', 'Semi-annually', 'Quarterly', 'Monthly', 'Other'],
+      default: 'Annually',
+    },
+
+    paymentMethod: {
+      type: String,
+      enum: ['Cash', 'Bank', 'Wave', 'Bizum', 'Other'],
+      default: 'Cash',
+    },
+
+    amountEUR: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+
+    amountGMD: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+
+    yearsCovered: {
+      type: [Number], // e.g. [2018, 2019, 2020]
+      default: [],
+    },
+
+    position: {
+      type: String,
+      default: '',
+    },
+
+    confirmedBy: {
+      type: String,
+      default: '',
+    },
+
+    remarks: {
+      type: String,
+      default: '',
+    },
   },
   { timestamps: true }
 );
 
-// Auto ID: REC-0001, REC-0002...
-contributionSchema.pre("save", async function (next) {
-  if (!this.receiptNumber) {
-    const n = await getNextSeq("receipt");
-    this.receiptNumber = `REC-${String(n).padStart(4, "0")}`;
+/**
+ * Auto-generate receiptNumber like REC-0001, REC-0002, ...
+ */
+contributionSchema.pre('save', async function (next) {
+  if (this.receiptNumber) return next();
+
+  try {
+    const last = await mongoose
+      .model('Contribution')
+      .findOne({ receiptNumber: { $regex: /^REC-\d+$/ } })
+      .sort({ receiptNumber: -1 })
+      .lean();
+
+    let nextNum = 1;
+
+    if (last && last.receiptNumber) {
+      const m = last.receiptNumber.match(/^REC-(\d+)$/);
+      if (m && m[1]) {
+        nextNum = parseInt(m[1], 10) + 1;
+      }
+    }
+
+    const padded = String(nextNum).padStart(4, '0');
+    this.receiptNumber = 'REC-' + padded;
+
+    next();
+  } catch (err) {
+    next(err);
   }
-  // normalize: if only one currency provided, back-fill using rate
-  if ((this.amountEUR ?? 0) > 0 && (this.amountGMD ?? 0) === 0) {
-    this.amountGMD = Math.round((this.amountEUR * this.rate + Number.EPSILON) * 100) / 100;
-  } else if ((this.amountGMD ?? 0) > 0 && (this.amountEUR ?? 0) === 0 && this.rate > 0) {
-    this.amountEUR = Math.round(((this.amountGMD / this.rate) + Number.EPSILON) * 100) / 100;
-  }
-  next();
 });
 
-contributionSchema.index({ date: -1 });
-contributionSchema.index({ memberId: 1, date: -1 });
-
-export default mongoose.model("Contribution", contributionSchema);
+module.exports = mongoose.model('Contribution', contributionSchema);

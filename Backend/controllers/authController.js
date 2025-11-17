@@ -3,9 +3,10 @@ const bcrypt = require('bcryptjs');
 const Member = require('../models/memberModel'); // adjust if your path differs
 
 /**
- * Expects { identity, password }
- * identity can be email OR memberId
- * Responds with { success, user } where user has: id, memberId, name, email, role, mustChangePassword
+ * Login
+ * Expects: { identity, password }
+ *  - identity can be email OR memberId
+ * Responds: { success, user } on success
  */
 exports.login = async (req, res) => {
   try {
@@ -28,7 +29,7 @@ exports.login = async (req, res) => {
         .json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Compare password (user.password must be a bcrypt hash)
+    // Compare password (bcrypt hash in DB)
     const ok = await bcrypt.compare(password, user.password || '');
     if (!ok) {
       return res
@@ -36,7 +37,7 @@ exports.login = async (req, res) => {
         .json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Build payload your frontend expects
+    // Payload the frontend expects
     const payload = {
       id: user._id?.toString?.() || user.id,
       memberId: user.memberId,

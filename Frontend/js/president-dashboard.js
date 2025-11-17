@@ -1,158 +1,162 @@
 // Frontend/js/president-dashboard.js
-// President overview dashboard
+import {
+  api,
+  getUser,
+  clearUser,
+  go,
+  activeNav,
+  fmtEUR,
+  fmtGMD,
+  toDDMMYYYY,
+  requireRole,
+} from "./nkd-bus.js";
 
-import { api, $, $$, getUser, requireRole } from "./nkd-bus.js";
+const $ = (s) => document.querySelector(s);
 
-// ✅ Allow both president and admin to view this page
-requireRole(["president", "admin"]);
+function setupTopbar() {
+  // Only president & admin can view this dashboard
+  requireRole(["president", "admin"]);
 
-// -------- helpers --------
-const fmtMoney = (v, cur) =>
-  `${cur}${Number(v || 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  activeNav("dashboard");
 
-const put = (id, val) => {
-  const el = document.getElementById(id);
-  if (el) el.textContent = val;
-};
-
-// -------- load data --------
-async function loadMembers() {
-  try {
-    const list = await api.getMembers();
-    const members = Array.isArray(list) ? list : (list.items || []);
-    const total = members.length;
-    const active = members.filter(
-      (m) => (m.status || "").toLowerCase() === "active"
-    ).length;
-    const annual = members.filter(
-      (m) => (m.contributionPlan || "").toLowerCase().includes("annual")
-    ).length;
-    const semi = members.filter(
-      (m) => (m.contributionPlan || "").toLowerCase().includes("semi")
-    ).length;
-
-    put("k_members_total", total);
-    put("k_members_active", active);
-    put("k_members_annual", annual);
-    put("k_members_semi", semi);
-  } catch (err) {
-    console.error("Members load failed", err);
-  }
-}
-
-async function loadContributions() {
-  try {
-    const list = await api.getContributions?.();
-    const rows = Array.isArray(list) ? list : (list.items || []);
-    const now = new Date();
-    const year = now.getFullYear();
-
-    let eur = 0,
-      gmd = 0,
-      eurY = 0,
-      gmdY = 0;
-
-    for (const r of rows) {
-      const d = r.date ? new Date(r.date) : null;
-      const inYear = d && d.getFullYear() === year;
-      const vE = Number(r.amountEUR || r.eur || 0);
-      const vG = Number(r.amountGMD || r.gmd || 0);
-      eur += vE;
-      gmd += vG;
-      if (inYear) {
-        eurY += vE;
-        gmdY += vG;
-      }
-    }
-
-    put("k_contrib_eur", fmtMoney(eur, "€"));
-    put("k_contrib_gmd", fmtMoney(gmd, "D"));
-    put("k_contrib_eur_y", fmtMoney(eurY, "€"));
-    put("k_contrib_gmd_y", fmtMoney(gmdY, "D"));
-  } catch (err) {
-    console.error("Contributions load failed", err);
-  }
-}
-
-async function loadExpenditures() {
-  try {
-    const list = await api.getExpenditures?.();
-    const rows = Array.isArray(list) ? list : (list.items || []);
-    const now = new Date();
-    const year = now.getFullYear();
-
-    let eur = 0,
-      gmd = 0,
-      eurY = 0,
-      gmdY = 0;
-
-    for (const r of rows) {
-      const d = r.date ? new Date(r.date) : null;
-      const inYear = d && d.getFullYear() === year;
-      const vE = Number(r.amountEUR || r.eur || 0);
-      const vG = Number(r.amountGMD || r.gmd || 0);
-      eur += vE;
-      gmd += vG;
-      if (inYear) {
-        eurY += vE;
-        gmdY += vG;
-      }
-    }
-
-    put("k_exp_eur", fmtMoney(eur, "€"));
-    put("k_exp_gmd", fmtMoney(gmd, "D"));
-    put("k_exp_eur_y", fmtMoney(eurY, "€"));
-    put("k_exp_gmd_y", fmtMoney(gmdY, "D"));
-  } catch (err) {
-    console.error("Expenditures load failed", err);
-  }
-}
-
-async function loadProjects() {
-  try {
-    const list = await api.getProjects?.();
-    const rows = Array.isArray(list) ? list : (list.items || []);
-    const total = rows.length;
-    const active = rows.filter(
-      (p) => (p.status || "").toLowerCase() === "active"
-    ).length;
-    const completed = rows.filter(
-      (p) => (p.status || "").toLowerCase() === "completed"
-    ).length;
-
-    put("k_proj_total", total);
-    put("k_proj_active", active);
-    put("k_proj_completed", completed);
-  } catch (err) {
-    console.error("Projects load failed", err);
-  }
-}
-
-async function loadMeetings() {
-  try {
-    const list = await api.getMeetings?.();
-    const rows = Array.isArray(list) ? list : (list.items || []);
-    const total = rows.length;
-
-    put("k_meet_total", total);
-  } catch (err) {
-    console.error("Meetings load failed", err);
-  }
-}
-
-// -------- init --------
-document.addEventListener("DOMContentLoaded", () => {
-  // top user slot text
   const u = getUser();
   const slot = document.querySelector("[data-user-slot]");
-  if (slot) slot.textContent = `${u?.name || "President"} • ${u?.role || "president"}`;
+  if (slot && u) {
+    const role = (u.role || "president").toLowerCase();
+    slot.textContent = `${u.name || u.memberId || u.email || "President"} • ${role}`;
+  }
 
-  loadMembers();
-  loadContributions();
-  loadExpenditures();
-  loadProjects();
-  loadMeetings();
-});
+  const btn = document.querySelector(".menu-toggle");
+  const nav = document.getElementById("adminNav");
+  if (btn && nav) btn.addEventListener("click", () => nav.classList.toggle("active"));
+
+  $("#logoutLink")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    clearUser();
+    go("login.html");
+  });
+}
+
+function yearFilter(row) {
+  if (!row || !row.date) return false;
+  const d = new Date(row.date);
+  if (isNaN(d)) return false;
+  return d.getFullYear() === new Date().getFullYear();
+}
+
+async function loadKPIsAndTables() {
+  const year = new Date().getFullYear();
+  $("#kpiYear").textContent = year;
+
+  try {
+    const [membersRaw, contribRaw, expRaw, projRaw, meetRaw] = await Promise.all([
+      api.getMembers().catch(() => []),
+      api.get("/contributions").catch(() => []),
+      api.get("/expenditures").catch(() => []),
+      api.get("/projects").catch(() => []),
+      api.getMeetings().catch(() => []),
+    ]);
+
+    const members = Array.isArray(membersRaw) ? membersRaw : membersRaw.items || [];
+    const contribList = Array.isArray(contribRaw) ? contribRaw : contribRaw.items || [];
+    const expList = Array.isArray(expRaw) ? expRaw : expRaw.items || [];
+    const projects = Array.isArray(projRaw) ? projRaw : projRaw.items || [];
+    const meetings = Array.isArray(meetRaw) ? meetRaw : meetRaw.items || [];
+
+    /* ----- KPIs ----- */
+    $("#kpiMembers").textContent = members.length;
+    $("#kpiMeetings").textContent = meetings.length;
+
+    let cEUR = 0,
+      cGMD = 0,
+      eEUR = 0,
+      eGMD = 0;
+
+    contribList.filter(yearFilter).forEach((c) => {
+      cEUR += Number(c.amountEUR || 0);
+      cGMD += Number(c.amountGMD || 0);
+    });
+    expList.filter(yearFilter).forEach((x) => {
+      eEUR += Number(x.amountEUR || 0);
+      eGMD += Number(x.amountGMD || 0);
+    });
+
+    $("#kpiContribEUR").textContent = fmtEUR(cEUR);
+    $("#kpiExpGMD").textContent = fmtGMD(eGMD);
+
+    $("#kpiNetEUR").textContent = fmtEUR(cEUR - eEUR);
+    $("#kpiNetGMD").textContent = fmtGMD(cGMD - eGMD);
+
+    const activeProjects = projects.filter((p) =>
+      String(p.status || "").toLowerCase().match(/active|ongoing|in progress/)
+    );
+    $("#kpiActiveProjects").textContent = activeProjects.length;
+    $("#kpiTotalProjects").textContent = projects.length;
+
+    /* ----- tables: contributions ----- */
+    const contribSorted = contribList
+      .slice()
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 8);
+
+    const cBody = $("#tblContribBody");
+    if (!contribSorted.length) {
+      cBody.innerHTML =
+        '<tr><td colspan="5" class="muted">No contributions recorded.</td></tr>';
+    } else {
+      cBody.innerHTML = contribSorted
+        .map(
+          (c) => `
+          <tr>
+            <td>${c.date ? toDDMMYYYY(c.date) : ""}</td>
+            <td>${c.memberName || c.member || "-"}</td>
+            <td>${c.receipt || c.receiptNumber || ""}</td>
+            <td class="right">${fmtEUR(c.amountEUR || 0)}</td>
+            <td class="right">${fmtGMD(c.amountGMD || 0)}</td>
+          </tr>`
+        )
+        .join("");
+    }
+
+    /* ----- tables: expenditures / projects ----- */
+    const expSorted = expList
+      .slice()
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 8);
+
+    const eBody = $("#tblExpBody");
+    if (!expSorted.length) {
+      eBody.innerHTML =
+        '<tr><td colspan="5" class="muted">No expenditures recorded.</td></tr>';
+    } else {
+      eBody.innerHTML = expSorted
+        .map((x) => {
+          // try to link project by ID if available
+          const ref = x.reference || x.refNumber || x.expRef || "";
+          const projName =
+            x.projectName ||
+            (projects.find((p) => p.projectId === x.projectId)?.name || "");
+          const label = projName ? `${ref || projName}` : ref;
+
+          return `
+            <tr>
+              <td>${x.date ? toDDMMYYYY(x.date) : ""}</td>
+              <td>${label || "-"}</td>
+              <td>${x.category || x.payee || "-"}</td>
+              <td class="right">${fmtEUR(x.amountEUR || 0)}</td>
+              <td class="right">${fmtGMD(x.amountGMD || 0)}</td>
+            </tr>`;
+        })
+        .join("");
+    }
+  } catch (err) {
+    console.error("[President Dashboard] load error", err);
+  }
+}
+
+function init() {
+  setupTopbar();
+  loadKPIsAndTables();
+}
+
+window.addEventListener("DOMContentLoaded", init);

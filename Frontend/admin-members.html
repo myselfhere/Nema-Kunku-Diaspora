@@ -1,194 +1,145 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Members — Admin</title>
-  <link rel="stylesheet" href="admin-style.css" />
-
-  <style>
-    .mt-16 { margin-top: 16px; }
-    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-    @media (max-width: 1100px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 640px) { .grid-4 { grid-template-columns: 1fr; } }
-
-    .toolbar {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr 1fr auto;
-      gap: 12px;
-      align-items: center;
-    }
-    @media (max-width: 900px) {
-      .toolbar { grid-template-columns: 1fr 1fr; gap: 10px; }
-    }
-
-    .sticky-header thead th {
-      position: sticky;
-      top: 0;
-      z-index: 1;
-      background: #f5fbf5;
-    }
-  </style>
+  <link rel="stylesheet" href="admin-style.css"/>
 </head>
 <body>
-  <!-- NAVBAR -->
-  <header class="admin-topbar">
-    <div class="container row">
-      <button class="menu-toggle" aria-label="Menu">☰</button>
 
-      <nav class="admin-nav" id="adminNav">
-        <a href="admin-dashboard.html">Dashboard</a>
-        <a href="admin-members.html" class="active">Members</a>
-        <a href="admin-contributions.html">Contributions</a>
-        <a href="admin-expenditures.html">Expenditures</a>
-        <a href="admin-projects.html">Projects</a>
-        <a href="admin-meetings.html">Meetings</a>
-        <a href="admin-settings.html">Settings</a>
-      </nav>
+<!-- NAVBAR -->
+<header class="admin-topbar">
+  <div class="container row">
+    <button class="menu-toggle">☰</button>
 
-      <div class="admin-user">
-        <span data-user-slot>Offline Admin • admin</span>
-        <a href="login.html">Logout</a>
+    <nav class="admin-nav" id="adminNav">
+      <a href="admin-dashboard.html" data-key="dashboard">Dashboard</a>
+      <a href="admin-members.html" data-key="members">Members</a>
+      <a href="admin-contributions.html" data-key="contributions">Contributions</a>
+      <a href="admin-expenditures.html" data-key="expenditures">Expenditures</a>
+      <a href="admin-projects.html" data-key="projects">Projects</a>
+      <a href="admin-meetings.html" data-key="meetings">Meetings</a>
+      <a href="admin-settings.html" data-key="settings">Settings</a>
+    </nav>
+
+    <div class="admin-user">
+      <span data-user-slot>Admin</span>
+      <a href="login.html">Logout</a>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="admin-shell">
+<div class="container">
+
+  <h1 class="page-title">Members</h1>
+
+  <!-- STAT CARDS -->
+  <section class="content-grid grid-4" style="margin-bottom:20px">
+    <div class="card"><div class="card-header">Total Members</div><div class="card-body">
+      <div class="stat-big" id="statTotal">0</div><p class="muted">All registered members</p>
+    </div></div>
+
+    <div class="card"><div class="card-header">Active</div><div class="card-body">
+      <div class="stat-big" id="statActive">0</div><p class="muted">Currently active</p>
+    </div></div>
+
+    <div class="card"><div class="card-header">Annually</div><div class="card-body">
+      <div class="stat-big" id="statAnnual">0</div><p class="muted">Annual plan</p>
+    </div></div>
+
+    <div class="card"><div class="card-header">Semi-Annual</div><div class="card-body">
+      <div class="stat-big" id="statSemi">0</div><p class="muted">Semi-annual plan</p>
+    </div></div>
+  </section>
+
+  <!-- FILTERS -->
+  <section class="card" style="margin-bottom:20px">
+    <div class="card-header">Find & Filter</div>
+    <div class="card-body">
+      <div class="row gap">
+        <input id="search" class="input" placeholder="Search name, email, ID, country..."/>
+
+        <select id="filterRole">
+          <option value="">All roles</option>
+          <option value="admin">Admin</option>
+          <option value="financial">Financial</option>
+          <option value="project-manager">Project Manager</option>
+          <option value="secretary">Secretary</option>
+          <option value="president">President</option>
+          <option value="viewer">Viewer</option>
+          <option value="member">Member</option>
+        </select>
+
+        <select id="filterPlan">
+          <option value="">All plans</option>
+          <option value="Annually">Annually</option>
+          <option value="Semi-Annual">Semi-Annual</option>
+        </select>
+
+        <button id="btnAdd" class="btn btn-primary">+ Add Member</button>
+        <button id="btnExport" class="btn btn-secondary">Export CSV</button>
       </div>
     </div>
-  </header>
+  </section>
 
-  <main class="admin-shell">
-    <h1 class="page-title">Members</h1>
-
-    <!-- ===== STATS ===== -->
-    <section class="content-grid grid-4">
-      <div class="card">
-        <div class="card-header">Total Members</div>
-        <div class="card-body">
-          <div class="stat-big" id="k_total">0</div>
-          <div class="muted">All registered members</div>
-        </div>
+  <!-- TABLE -->
+  <section class="card">
+    <div class="card-header">All Members</div>
+    <div class="card-body">
+      <div class="table-wrap">
+        <table class="table-mini" id="tblMembers">
+          <thead>
+            <tr>
+              <th>ID</th><th>Name</th><th>Contact</th><th>Country</th>
+              <th>Role</th><th>Plan</th><th>Joined</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
 
-      <div class="card">
-        <div class="card-header">Active</div>
-        <div class="card-body">
-          <div class="stat-big" id="k_active">0</div>
-          <div class="muted">Currently active</div>
-        </div>
+      <div class="pager center" style="margin-top:12px">
+        <button id="prevPage" class="btn btn-light">Prev</button>
+        <span id="pageInfo">Page 1 of 1</span>
+        <button id="nextPage" class="btn btn-light">Next</button>
       </div>
 
-      <div class="card">
-        <div class="card-header">Annually</div>
-        <div class="card-body">
-          <div class="stat-big" id="k_annual">0</div>
-          <div class="muted">Annual plan</div>
-        </div>
-      </div>
+    </div>
+  </section>
 
-      <div class="card">
-        <div class="card-header">Semi-Annual</div>
-        <div class="card-body">
-          <div class="stat-big" id="k_semi">0</div>
-          <div class="muted">Semi-annual plan</div>
-        </div>
-      </div>
-    </section>
+</div>
+</main>
 
-    <!-- ===== FIND & FILTER ===== -->
-    <section class="card mt-16">
-      <div class="card-header">Find & Filter</div>
-      <div class="card-body">
-        <div class="toolbar">
-          <input
-            id="searchInput"
-            placeholder="Search name, email, ID, country..."
-          />
+<footer class="admin-footer">
+  © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+</footer>
 
-          <select id="roleFilter">
-            <option value="">All roles</option>
-            <option value="admin">Admin</option>
-            <option value="president">President</option>
-            <option value="financial">Financial</option>
-            <option value="project-manager">Project Manager</option>
-            <option value="secretary">Secretary</option>
-            <option value="member">Member</option>
-          </select>
+<!-- NAVBAR SCRIPT -->
+<script>
+(function(){
+  const btn=document.querySelector(".menu-toggle");
+  const nav=document.getElementById("adminNav");
+  if(btn) btn.addEventListener("click",()=>nav.classList.toggle("active"));
 
-          <select id="planFilter">
-            <option value="">All plans</option>
-            <option value="Annually">Annually</option>
-            <option value="Semi-Annual">Semi-Annual</option>
-          </select>
+  const map={
+    "admin-members.html":"members",
+    "admin-add-member.html":"members",
+    "admin-view-member.html":"members"
+  };
+  const page=location.pathname.split("/").pop();
+  if(map[page]){
+    document.querySelectorAll(".admin-nav a").forEach(a=>{
+      if(a.dataset.key===map[page]) a.classList.add("active");
+    });
+  }
+})();
+</script>
 
-          <div class="right">
-            <a
-              href="admin-add-member.html"
-              id="addMemberBtn"
-              class="btn btn-primary"
-            >
-              + Add Member
-            </a>
-            <button id="exportBtn" class="btn btn-secondary">
-              Export CSV
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
+<!-- PAGE LOGIC -->
+<script type="module" src="js/admin-members.js"></script>
 
-    <!-- ===== TABLE ===== -->
-    <section class="card mt-16">
-      <div class="card-header">All Members</div>
-      <div class="card-body">
-        <div class="table-wrap sticky-header">
-          <table class="table-mini">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Contact</th>
-                <th>Country</th>
-                <th>Role</th>
-                <th>Plan</th>
-                <th>Joined</th>
-                <th>Status</th>
-                <th class="right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="membersTbody">
-              <tr>
-                <td colspan="9" class="muted">Loading…</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="pager center mt-16">
-          <button class="btn btn-secondary" id="prevBtn">Prev</button>
-          <span id="pageInfo" class="muted">Page 1 of 1</span>
-          <button class="btn btn-secondary" id="nextBtn">Next</button>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="admin-footer">
-    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
-  </footer>
-
-  <!-- User + mobile menu -->
-  <script type="module">
-    import { getUser } from "./js/nkd-bus.js";
-    const u = getUser();
-    const slot = document.querySelector("[data-user-slot]");
-    if (slot) {
-      slot.textContent = `${u?.name || "Offline Admin"} • ${u?.role || "admin"}`;
-    }
-    const btn = document.querySelector(".menu-toggle");
-    const nav = document.getElementById("adminNav");
-    if (btn && nav) {
-      btn.addEventListener("click", () => nav.classList.toggle("active"));
-    }
-  </script>
-
-  <!-- Members controller -->
-  <script type="module" src="./js/admin-members.js"></script>
 </body>
 </html>
