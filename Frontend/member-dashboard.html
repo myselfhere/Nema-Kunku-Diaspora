@@ -1,317 +1,151 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Member Dashboard — Nema Kunku Diaspora</title>
-
-<<<<<<< HEAD
-  <!-- Shared admin/member style -->
+  <title>Member Dashboard | Nema Kunku Diaspora</title>
   <link rel="stylesheet" href="admin-style.css" />
-
-  <style>
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-
-    @media (max-width: 1100px){
-      .grid-4 { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 640px){
-      .grid-4, .grid-2 { grid-template-columns: 1fr; }
-    }
-
-    .stat-big { font-size: 32px; font-weight: 800; color: #1b5e20; }
-    .mt-16 { margin-top: 16px; }
-    .right { text-align: right; }
-    .center { text-align: center; }
-    .sticky-header thead th { position: sticky; top: 0; z-index: 1; background: #f5fbf5; }
-=======
-  <link rel="stylesheet" href="admin-style.css" />
-
-  <style>
-    /* === CENTER ALL DASHBOARD CONTENT === */
-    .dashboard-wrap {
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-
-    .content-grid {
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-
-    .card {
-      max-width: 1000px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    /* custom grid control */
-    .grid-2 { 
-      display: grid; 
-      grid-template-columns: 1fr 1fr; 
-      gap: 16px; 
-    }
-
-    .grid-4 { 
-      display: grid; 
-      grid-template-columns: repeat(4, 1fr); 
-      gap: 16px; 
-    }
-
-    @media (max-width: 1100px){ .grid-4{ grid-template-columns: repeat(2,1fr);} }
-    @media (max-width: 640px){ .grid-4, .grid-2{ grid-template-columns: 1fr; } }
-
-    .stat-big { font-size: 32px; font-weight: 800; color: #1b5e20; }
-    .mt-16 { margin-top: 16px; }
-    .right { text-align:right; }
-    .center{text-align:center;}
-    .sticky-header thead th {
-      position: sticky; 
-      top: 0; 
-      z-index: 1; 
-      background: #f5fbf5;
-    }
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-  </style>
+  <script type="module" src="./js/member-dashboard.js" defer></script>
 </head>
-
 <body>
 
-<<<<<<< HEAD
-  <!-- ===== TOP NAVBAR ===== -->
-=======
-  <!-- ===== MEMBER TOP NAV ===== -->
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
+  <!-- NAVBAR -->
   <header class="admin-topbar">
     <div class="container row">
       <button class="menu-toggle" aria-label="Menu">☰</button>
 
-      <nav class="admin-nav" id="memberNav">
-        <a class="active" href="member-dashboard.html">Dashboard</a>
-        <a href="member-contributions.html">Contributions</a>
-        <a href="member-attendance.html">Attendance</a>
+      <nav class="admin-nav" id="adminNav">
+        <a href="member-dashboard.html" class="active">Dashboard</a>
+        <a href="view-contributions.html">Contributions</a>
+        <a href="view-attendance.html">Attendance</a>
         <a href="member-projects.html">Projects</a>
         <a href="member-settings.html">Settings</a>
       </nav>
 
       <div class="admin-user">
-        <span data-user-slot>Member • member</span>
-        <a id="logoutLink" href="#" style="cursor:pointer;">Logout</a>
+        <span id="memberNameDisplay"></span>
+        <a href="#" id="logoutBtn">Logout</a>
       </div>
     </div>
   </header>
 
-<<<<<<< HEAD
-  <!-- ===== PAGE CONTENT ===== -->
-  <main class="admin-shell">
+  <!-- MAIN SHELL -->
+  <div class="admin-shell container">
 
-    <h1 class="page-title">Welcome</h1>
+    <!-- PAGE TITLE -->
+    <h2 class="page-title center">Welcome</h2>
 
-    <!-- STATS -->
-=======
-  <main class="admin-shell dashboard-wrap">
-    <h1 class="page-title center">Welcome</h1>
+    <!-- KPI SECTION -->
+    <div class="content-grid grid-3 stats-grid">
 
-    <!-- ===== KPIs ===== -->
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-    <section class="content-grid grid-4">
-      <div class="card">
-        <div class="card-header">Paid (EUR) — YTD</div>
+      <div class="card stat-card">
         <div class="card-body">
-          <div class="stat-big" id="kpiEUR">€0.00</div>
-          <div class="muted">Sum of EUR contributions</div>
+          <p class="stat-label">Paid (EUR) — YTD</p>
+          <p id="eurTotal" class="stat-big">€0.00</p>
+          <p class="muted">Sum of contributions in EUR</p>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-header">Paid (GMD) — YTD</div>
+      <div class="card stat-card">
         <div class="card-body">
-          <div class="stat-big" id="kpiGMD">D0.00</div>
-          <div class="muted">Sum of GMD contributions</div>
+          <p class="stat-label">Paid (GMD) — YTD</p>
+          <p id="gmdTotal" class="stat-big">D0.00</p>
+          <p class="muted">Sum of contributions in GMD</p>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-header">Meetings Attended</div>
+      <div class="card stat-card">
         <div class="card-body">
-          <div class="stat-big" id="kpiAttend">0</div>
-          <div class="muted"><span id="kpiMissed">0</span> missed</div>
+          <p class="stat-label">Meetings Attended</p>
+          <p id="meetingsAttended" class="stat-big">0</p>
+          <p class="muted"><span id="meetingMissed">0</span> missed</p>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-header">Arrears</div>
-        <div class="card-body">
-          <div class="stat-big" id="arrearsYears">0 yrs</div>
-          <div class="muted">
-<<<<<<< HEAD
-            <span id="arrearsEUR">€0.00</span> ·
-=======
-            <span id="arrearsEUR">€0.00</span> · 
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-            <span id="arrearsGMD">D0.00</span>
-          </div>
-        </div>
-      </div>
-    </section>
+    </div>
 
-<<<<<<< HEAD
-    <!-- ACCOUNT BOX -->
-=======
-    <!-- ===== ACCOUNT INFO ===== -->
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-    <section class="card mt-16">
-      <div class="card-header">My Account</div>
-      <div class="card-body">
-        <strong id="myAccountName">—</strong><br>
-        <span class="muted">Plan: <span id="myAccountPlan">—</span></span><br>
-        <span class="muted">ID: <span id="myAccountId">—</span></span>
-      </div>
-    </section>
-
-<<<<<<< HEAD
     <!-- QUICK LINKS -->
-=======
-    <!-- ===== QUICK LINKS ===== -->
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-    <section class="card mt-16">
-      <div class="card-header">Quick Links</div>
-      <div class="card-body">
-        <div class="row wrap" style="gap:12px">
-          <a class="btn btn-secondary" href="member-receipts.html">View Receipts</a>
-          <a class="btn btn-secondary" href="member-attendance.html">View Attendance</a>
-          <a class="btn btn-secondary" href="member-settings.html#password">Change Password</a>
+    <div class="card" style="margin: 20px auto;">
+      <div class="card-body center">
+        <h3>Quick Links</h3>
+        <div style="margin-top:14px; display:flex; flex-wrap:wrap; justify-content:center; gap:12px;">
+          <a class="btn btn-light" href="member-receipts.html">View Receipts</a>
+          <a class="btn btn-light" href="view-attendance.html">View Attendance</a>
+          <a class="btn btn-light" href="member-password.html">Change Password</a>
           <button class="btn btn-primary" id="downloadCsvBtn">Download Statement (CSV)</button>
         </div>
       </div>
-    </section>
+    </div>
 
-<<<<<<< HEAD
-    <!-- Recent Contributions / Meetings -->
-=======
-    <!-- ===== RECENT CONTRIBUTIONS + MEETINGS ===== -->
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-    <section class="grid-2 mt-16">
+    <!-- ACCOUNT INFO -->
+    <div class="card" style="margin: 20px auto;">
+      <div class="card-body">
+        <h3>My Account</h3>
+        <p><strong>Name:</strong> <span id="accName">-</span></p>
+        <p><strong>ID:</strong> <span id="accId">-</span></p>
+        <p><strong>Plan:</strong> <span id="accPlan">-</span></p>
+        <p><strong>Role:</strong> <span id="accRole">member</span></p>
+      </div>
+    </div>
 
-      <div class="card">
-        <div class="card-header row between">
-          <span>Recent Contributions</span>
-<<<<<<< HEAD
-          <a class="btn btn-light" href="member-contributions.html">View All</a>
-=======
-          <button class="btn btn-light">View All</button>
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-        </div>
-        <div class="card-body">
-          <div class="table-wrap sticky-header">
-            <table class="table-mini">
-              <thead>
-                <tr>
-<<<<<<< HEAD
-                  <th>Receipt</th><th>Date</th><th>Plan</th><th>Method</th><th>EUR</th><th>GMD</th>
-=======
-                  <th>Receipt</th><th>Date</th><th>Plan</th>
-                  <th>Method</th><th>EUR</th><th>GMD</th>
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-                </tr>
-              </thead>
-              <tbody id="recentContribTbody">
-                <tr><td colspan="6" class="muted">Loading…</td></tr>
-              </tbody>
-            </table>
-          </div>
+    <!-- RECENT CONTRIBUTIONS -->
+    <div class="card" style="margin: 20px auto;">
+      <div class="card-header">
+        Recent Contributions
+        <a href="view-contributions.html" style="float:right;font-weight:700;">View All</a>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="table-mini">
+            <thead>
+              <tr>
+                <th>Receipt</th>
+                <th>Date</th>
+                <th>Plan</th>
+                <th>Method</th>
+                <th>EUR</th>
+                <th>GMD</th>
+              </tr>
+            </thead>
+            <tbody id="contribTableBody">
+              <tr><td colspan="6">Loading...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
+    </div>
 
-      <div class="card">
-        <div class="card-header row between">
-          <span>Recent Meetings</span>
-<<<<<<< HEAD
-          <a class="btn btn-light" href="member-attendance.html">View All</a>
-=======
-          <button class="btn btn-light">View All</button>
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-        </div>
-        <div class="card-body">
-          <div class="table-wrap sticky-header">
-            <table class="table-mini">
-              <thead>
-<<<<<<< HEAD
-                <tr><th>ID</th><th>Date</th><th>Title / Notes</th><th>Status</th></tr>
-=======
-                <tr>
-                  <th>ID</th><th>Date</th><th>Title / Notes</th><th>Status</th>
-                </tr>
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-              </thead>
-              <tbody id="recentMeetTbody">
-                <tr><td colspan="4" class="muted">Loading…</td></tr>
-              </tbody>
-            </table>
-          </div>
+    <!-- RECENT MEETINGS -->
+    <div class="card" style="margin: 20px auto;">
+      <div class="card-header">
+        Recent Meetings
+        <a href="view-meetings.html" style="float:right;font-weight:700;">View All</a>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="table-mini">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Title</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="meetingsTableBody">
+              <tr><td colspan="4">No meetings logged yet.</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
+    </div>
 
-    </section>
-  </main>
+  </div>
 
+  <!-- FOOTER -->
   <footer class="admin-footer">
-    © 2025 <strong>Nema Kunku Diaspora</strong> — All rights reserved.
+    © 2025 <strong>Nema Kunku Diaspora</strong>. All rights reserved.
   </footer>
-
-  <!-- ===== USER + LOGOUT HANDLING ===== -->
-  <script type="module">
-<<<<<<< HEAD
-    import { getUser } from "./js/nkd-bus.js";
-
-    // Fill profile name in navbar + account box
-    const u = getUser();
-    if (u) {
-=======
-    // Fill user slot from storage
-    try {
-      const u = JSON.parse(localStorage.getItem("nkd_user") || "null");
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-      const slot = document.querySelector("[data-user-slot]");
-      if (slot) slot.textContent = `${u.name || "Member"} • ${u.role || "member"}`;
-
-      document.getElementById("myAccountId").textContent   = u.memberId ?? "—";
-      document.getElementById("myAccountName").textContent = u.name     ?? "Member";
-      document.getElementById("myAccountPlan").textContent = u.plan     ?? "—";
-    }
-
-<<<<<<< HEAD
-    // Mobile menu toggle
-    document.querySelector(".menu-toggle")?.addEventListener("click", () => {
-      document.getElementById("memberNav").classList.toggle("active");
-    });
-
-    // FULL WORKING LOGOUT
-    document.getElementById("logoutLink")?.addEventListener("click", (e) => {
-=======
-    // Mobile nav toggle
-    const btn = document.querySelector(".menu-toggle");
-    const nav = document.getElementById("memberNav");
-    btn && nav && btn.addEventListener("click", () => nav.classList.toggle("active"));
-
-    // Logout
-    document.getElementById("logoutLink")?.addEventListener("click", (e)=>{
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-      e.preventDefault();
-      try {
-        localStorage.removeItem("nkd-user");
-        sessionStorage.removeItem("nkd-user");
-      } catch {}
-      window.location.href = "login.html";
-    });
-  </script>
-
-<<<<<<< HEAD
-  <!-- Dashboard Controller -->
-=======
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-  <script type="module" src="./js/member-dashboard.js"></script>
 
 </body>
 </html>

@@ -1,184 +1,152 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login | Nema Kunku Diaspora</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    /* Center form + input text + labels */
-    .login-card { text-align: center; margin: 0 auto; }
-    .login-section {
-      display: flex; align-items: center; justify-content: center;
-      min-height: calc(100vh - 150px); background: #f8fff8;
-    }
-    .login-form {
-      display: flex; flex-direction: column; align-items: center;
-      gap: 12px; margin-top: 16px;
-    }
-    .login-form label {
-      display: block; width: 100%; text-align: center; color: #333; font-weight: 600;
-    }
-    .login-form input {
-      width: 90%; text-align: center; padding: 12px;
-      border: 1px solid #cfd8cf; border-radius: 8px; font-size: 1rem;
-      transition: border-color .2s, box-shadow .2s;
-    }
-    .login-form input:focus {
-      outline: none;
-      border-color: #2e7d32;
-      box-shadow: 0 0 0 3px rgba(46,125,50,.12);
-    }
-    .btn.primary {
-      width: 90%; height: 46px; border: none; border-radius: 8px;
-      background: #3a7722; color: #fff; font-weight: 800; font-size: 16px; cursor: pointer;
-      transition: background .2s ease;
-    }
-    .btn.primary:hover { background: #2e5f1a; }
-
-    #msg { margin-top: 10px; font-weight: 600; }
-  </style>
 </head>
 <body>
-  <!-- ===== NAVBAR ===== -->
+  <!-- TOP NAV (same items as site) -->
   <header class="navbar">
-    <div class="container">
-      <ul class="nav-menu">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="about.html">About Us</a></li>
-        <li><a href="projects.html">Projects</a></li>
-        <li><a href="membership.html">Membership</a></li>
-        <li><a href="contact.html">Contact Us</a></li>
-        <li><a class="active" href="login.html">Login</a></li>
-      </ul>
-    </div>
+    <ul class="nav-menu">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About Us</a></li>
+      <li><a href="projects.html">Projects</a></li>
+      <li><a href="membership.html">Membership</a></li>
+      <li><a href="contact.html">Contact Us</a></li>
+      <li><a href="login.html" class="active">Login</a></li>
+    </ul>
   </header>
 
-  <!-- ===== LOGIN SECTION ===== -->
-  <main>
-    <section class="login-section">
-      <div class="login-card">
-        <h2>Member Login</h2>
-<<<<<<< HEAD
-        
-=======
-      
+  <!-- LOGIN CARD (centered) -->
+  <main class="login-shell">
+    <section class="login-card">
+      <h1>Member Login</h1>
 
->>>>>>> 1c25477 (Updated member filtering + contribution pages)
-        <form id="loginForm" class="login-form">
-          <label for="email"></label>
-          <input id="email" type="text"
-                 placeholder="Enter your email or Member ID" required />
+      <form id="loginForm" class="login-form">
+        <label for="identity">Email or Member ID</label>
+        <input
+          type="text"
+          id="identity"
+          name="identity"
+          placeholder="Enter your email or Member ID"
+          required
+        />
 
-          <label for="password">Password</label>
-          <input id="password" type="password"
-                 placeholder="Enter your password" required />
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Enter your password"
+          required
+        />
 
-          <button type="button" id="loginBtn" class="btn primary">Login</button>
-        </form>
+        <button type="submit" class="btn-primary">Login</button>
 
-        <p class="mt-12">
-          <a href="reset-password.html" class="link">Forgot your password?</a>
+        <p class="login-help">
+          <a href="#">Forgot your password?</a>
         </p>
 
-        <div id="msg"></div>
-      </div>
+        <p id="loginError" class="error-text" style="display:none;"></p>
+      </form>
     </section>
   </main>
 
-  <!-- ===== FOOTER ===== -->
-  <footer class="footer">
-    <p>© 2025 Nema Kunku Diaspora. All rights reserved.</p>
+  <footer class="site-footer">
+    © 2025 <strong>Nema Kunku Diaspora</strong>. All rights reserved.
   </footer>
 
-  <!-- ===== LOGIN LOGIC ===== -->
+  <!-- LOGIN LOGIC -->
   <script type="module">
-    import {
-      setUser, go, roleHome,
-      resolveMemberByIdentifier, offlineRoleFromEmail
-    } from "./js/nkd-bus.js";
+    import { api, setUser, roleHome, offlineRoleFromEmail, go } from "./js/nkd-bus.js";
 
-    const $ = (s) => document.querySelector(s);
-    const msg = $("#msg");
-    const emailEl = $("#email");
-    const passEl  = $("#password");
-    const btn     = $("#loginBtn");
+    const form = document.getElementById("loginForm");
+    const errorBox = document.getElementById("loginError");
+    const identityInput = document.getElementById("identity");
+    const passwordInput = document.getElementById("password");
 
-    const showMsg = (t, ok=false) => {
-      msg.textContent = t;
-      msg.style.color = ok ? "#1b5e20" : "#b00020";
-    };
-    const clean = (v="") => String(v||"").trim();
-
-    async function doLogin(){
-      const ident = clean(emailEl.value);
-      const pw    = clean(passEl.value);
-
-      if (!ident || !pw) {
-        return showMsg("Please enter both email/Member ID and password.");
-      }
-
-      let profile = null;
-      try {
-        profile = await resolveMemberByIdentifier(ident);
-      } catch (e) {
-        console.warn("[Login] resolve error", e);
-      }
-
-      // figure out member code (NKD0xx)
-      let memberCode = null;
-      if (profile?.memberId) {
-        memberCode = String(profile.memberId).toUpperCase().trim();
-      } else if (/^nkd\d+/i.test(ident)) {
-        memberCode = ident.toUpperCase().trim();
-      }
-
-      const expectedPw = memberCode ? `${memberCode}-2025` : "Password1";
-
-      if (pw !== expectedPw) {
-        return showMsg("Wrong email / Member ID or password.");
-      }
-
-      // Build session user
-      let role, name, email, memberId, id;
-      if (profile) {
-        id       = profile._id || profile.memberId || profile.email || ident;
-        email    = profile.email || (ident.includes("@") ? ident : "");
-        memberId = profile.memberId || memberCode || null;
-        name     = profile.name || profile.fullName || profile.memberId || ident;
-        role     = (profile.role || "").toLowerCase();
-        if (!role) role = offlineRoleFromEmail(memberId || email || ident);
-      } else {
-        id       = ident;
-        email    = ident.includes("@") ? ident : "";
-        memberId = memberCode;
-        name     = ident.includes("@") ? ident.split("@")[0] : (memberId || ident);
-        role     = offlineRoleFromEmail(ident);
-      }
-
-      const user = {
-        id,
-        memberId,
-        email,
-        name,
-        role,
-        mustChangePassword: false
-      };
-
-      try {
-        setUser(user);
-        showMsg("Login successful! Redirecting…", true);
-        setTimeout(() => go(roleHome(role)), 500);
-      } catch (e){
-        console.error(e);
-        showMsg("Login failed. Please try again.");
-      }
+    function showError(msg) {
+      if (!errorBox) return;
+      errorBox.textContent = msg || "Login failed.";
+      errorBox.style.display = "block";
     }
 
-    btn.addEventListener("click", doLogin);
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") doLogin();
-    });
+    // Optional: prefill from query string ?identity=...&password=...
+    (function prefillFromQuery() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const qIdentity = params.get("identity");
+        const qPassword = params.get("password");
+        if (qIdentity && identityInput) identityInput.value = qIdentity;
+        if (qPassword && passwordInput) passwordInput.value = qPassword;
+      } catch (_) {}
+    })();
+
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (errorBox) errorBox.style.display = "none";
+
+        const identity = identityInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!identity || !password) {
+          return showError("Please enter both identity and password.");
+        }
+
+        try {
+          // Main online login via backend
+          const res = await api.post("/auth/login", { identity, password });
+          console.log("[Login] response", res);
+
+          // Accept either { success:true, user } or { ok:true, data }
+          let success = false;
+          let user = null;
+
+          if (res) {
+            if (res.success) {
+              success = true;
+              user = res.user || res.data || res.member || null;
+            } else if (res.ok) {
+              success = true;
+              user = res.user || res.data || res.member || null;
+            }
+          }
+
+          if (!success || !user) {
+            throw new Error(res?.message || "Invalid credentials");
+          }
+
+          setUser(user);
+
+          if (user.mustChangePassword) {
+            // adjust this filename if your change-password page is different
+            go("member-password.html");
+          } else {
+            go(roleHome(user.role || "member"));
+          }
+        } catch (err) {
+          console.error("[Login] error", err);
+
+          // Optional offline fallback, still lets admin/roles browse dashboards.
+          try {
+            const role = offlineRoleFromEmail(identity);
+            const fakeUser = {
+              name: identity,
+              email: identity,
+              memberId: identity,
+              role,
+            };
+            setUser(fakeUser);
+            go(roleHome(role));
+          } catch {
+            showError("Login failed. Please check your details or try again later.");
+          }
+        }
+      });
+    }
   </script>
 </body>
 </html>

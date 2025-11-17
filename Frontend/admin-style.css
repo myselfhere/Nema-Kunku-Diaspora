@@ -175,7 +175,7 @@ input:focus,select:focus,textarea:focus{
 }
 .admin-footer strong{font-weight:900}
 
-/* Member/Admin shared small polish */
+/* Shared polish */
 .stat-big{font-size:28px;font-weight:800}
 .pill{
   background:#eef9ee;color:#1e411e;padding:6px 10px;
@@ -203,13 +203,13 @@ input:focus,select:focus,textarea:focus{
   .page-title{font-size:24px}
 }
 
-/* Tables */
+/* Main Table */
 .table{width:100%;border-collapse:separate;border-spacing:0;background:#fff}
 .table thead th{position:sticky;top:0;background:#f5fbf6;z-index:1;text-align:left;padding:12px;font-weight:700;color:#2f3a2f}
 .table tbody td{padding:12px;border-top:1px solid #eef3ee}
 .table tbody tr:nth-child(even){background:#fafdfb}
 
-/* Drawer */
+/* Drawer side panel */
 .drawer{position:fixed;inset:0;background:rgba(0,0,0,.28);display:none}
 .drawer.open{display:block}
 .drawer-inner{position:absolute;right:0;top:0;height:100%;width:min(560px, 100%);background:#f7fbf8;padding:16px;overflow:auto;box-shadow:-12px 0 24px rgba(0,0,0,.12)}
@@ -233,27 +233,15 @@ input:focus,select:focus,textarea:focus{
   .card {
     width: 95% !important;
   }
-}
 
-/* Center dashboard cards on mobile */
-@media (max-width: 640px){
-  .card{
-    margin-left: auto !important;
-    margin-right: auto !important;
-    width: 95% !important;     /* keeps it centered */
-  }
-
-  /* also center title spacing */
   .page-title{
-    text-align: center;
-    margin-left: auto !important;
-    margin-right: auto !important;
+    text-align:center;
+    margin:0 auto 14px auto !important;
   }
 
-  /* center KPI big numbers */
   .stat-value,
   .stat-label,
   .stat-sub {
-    text-align: center !important;
+    text-align:center !important;
   }
 }
