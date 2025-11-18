@@ -1,33 +1,93 @@
+// Backend/models/memberModel.js
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
 
-const MemberSchema = new mongoose.Schema(
+const memberSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    memberId: { type: String, unique: true },
-    email: { type: String, unique: true, sparse: true },
-    role: { type: String, default: "member" },
-    contributionPlan: { type: String, default: "Annually" },
-    phone: String,
-    country: String,
-    status: { type: String, default: "Active" },
+    memberId: {
+      type: String,
+      required: true,
+      unique: true, // e.g. NKD001
+    },
 
-    passwordHash: { type: String, required: true },
-    mustChangePassword: { type: Boolean, default: true },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
-    memberSince: { type: Date, default: Date.now },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    password: {
+      type: String,
+      required: true,
+    },
+
+    role: {
+      type: String,
+      enum: ["admin", "financial", "project-manager", "secretary", "viewer", "member"],
+      default: "member",
+    },
+
+    phone: {
+      type: String,
+      default: "",
+    },
+
+    position: {
+      type: String,
+      default: "",
+    },
+
+    country: {
+      type: String,
+      default: "",
+    },
+
+    memberSince: {
+      type: Date,
+      default: Date.now,
+    },
+
+    contributionPlan: {
+      type: String,
+      enum: ["Annually", "Semi-annually", "Quarterly", "Monthly", "Other", ""],
+      default: "",
+    },
+
+    contactMethod: {
+      type: String,
+      enum: ["WhatsApp", "Phone", "Email", "Other", ""],
+      default: "",
+    },
+
+    totalPaidGMD: {
+      type: Number,
+      default: 0,
+    },
+
+    totalPaidEUR: {
+      type: Number,
+      default: 0,
+    },
+
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
 
-// helpers
-MemberSchema.methods.comparePassword = async function (plain) {
-  return bcrypt.compare(plain, this.passwordHash);
-};
-
-MemberSchema.methods.setPassword = async function (plain) {
-  const salt = await bcrypt.genSalt(10);
-  this.passwordHash = await bcrypt.hash(plain, salt);
-};
-
-export default mongoose.model("Member", MemberSchema);
+const Member = mongoose.model("Member", memberSchema);
+export default Member;

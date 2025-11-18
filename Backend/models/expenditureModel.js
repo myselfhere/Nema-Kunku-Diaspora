@@ -1,55 +1,91 @@
+// Backend/models/expenditureModel.js
 import mongoose from "mongoose";
-import { getNextSeq } from "./Counter.js";
 
 const expenditureSchema = new mongoose.Schema(
   {
-    refNumber: { type: String, unique: true }, // EXP-0001
-    date: { type: Date, required: true },
+    referenceNumber: {
+      type: String, // e.g. EXP-0001
+      unique: true,
+    },
 
-    payee: { type: String, required: true },
-    payeeContact: { type: String, default: "" },
+    date: {
+      type: Date,
+      required: true,
+    },
+
+    payee: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      default: "",
+    },
+
+    amountEUR: {
+      type: Number,
+      default: 0,
+    },
+
+    amountGMD: {
+      type: Number,
+      default: 0,
+    },
 
     category: {
       type: String,
-      default: "Operations",
-      index: true,
-    }, // e.g., Operations, Project, Admin, Logistics...
-    method: {
-      type: String,
-      enum: ["Cash", "Bank", "Transfer", "Wave", "Other"],
-      default: "Cash",
-      index: true,
+      default: "",
     },
 
-    description: { type: String, default: "" },
+    paymentMethod: {
+      type: String,
+      enum: ["Cash", "Bank", "Wave", "Bizum", "Other"],
+      default: "Cash",
+    },
 
-    amountEUR: { type: Number, default: 0 },
-    amountGMD: { type: Number, default: 0 },
-    rate: { type: Number, default: 75 },
+    paidBy: {
+      type: String,
+      default: "",
+    },
 
-    projectId: { type: String, default: "" }, // PRJ-0001 (optional link)
-    paidBy: { type: String, default: "" },    // staff/member name
-    comments: { type: String, default: "" },
+    comments: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );
 
-// Auto ID: EXP-0001++
+// Auto-generate EXP-0001, EXP-0002, ...
 expenditureSchema.pre("save", async function (next) {
-  if (!this.refNumber) {
-    const n = await getNextSeq("expenditure");
-    this.refNumber = `EXP-${String(n).padStart(4, "0")}`;
+  if (this.referenceNumber) return next();
+
+  try {
+    const last = await mongoose
+      .model("Expenditure")
+      .findOne({ referenceNumber: { $regex: /^EXP-\d+$/ } })
+      .sort({ referenceNumber: -1 })
+      .lean();
+
+    let nextNum = 1;
+
+    if (last && last.referenceNumber) {
+      const m = last.referenceNumber.match(/^EXP-(\d+)$/);
+      if (m && m[1]) {
+        nextNum = parseInt(m[1], 10) + 1;
+      }
+    }
+
+    const padded = String(nextNum).padStart(4, "0");
+    this.referenceNumber = "EXP-" + padded;
+
+    next();
+  } catch (err) {
+    next(err);
   }
-  // auto-convert
-  if ((this.amountEUR ?? 0) > 0 && (this.amountGMD ?? 0) === 0) {
-    this.amountGMD = Math.round((this.amountEUR * this.rate + Number.EPSILON) * 100) / 100;
-  } else if ((this.amountGMD ?? 0) > 0 && (this.amountEUR ?? 0) === 0 && this.rate > 0) {
-    this.amountEUR = Math.round(((this.amountGMD / this.rate) + Number.EPSILON) * 100) / 100;
-  }
-  next();
 });
 
-expenditureSchema.index({ date: -1 });
-expenditureSchema.index({ category: 1, date: -1 });
-
-export default mongoose.model("Expenditure", expenditureSchema);
+const Expenditure = mongoose.model("Expenditure", expenditureSchema);
+export default Expenditure;
