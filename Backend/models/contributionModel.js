@@ -1,5 +1,5 @@
 // Backend/models/contributionModel.js
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 const contributionSchema = new mongoose.Schema(
   {
@@ -25,14 +25,14 @@ const contributionSchema = new mongoose.Schema(
 
     contributionPlan: {
       type: String,
-      enum: ['Annually', 'Semi-annually', 'Quarterly', 'Monthly', 'Other'],
-      default: 'Annually',
+      enum: ["Annually", "Semi-annually", "Quarterly", "Monthly", "Other"],
+      default: "Annually",
     },
 
     paymentMethod: {
       type: String,
-      enum: ['Cash', 'Bank', 'Wave', 'Bizum', 'Other'],
-      default: 'Cash',
+      enum: ["Cash", "Bank", "Wave", "Bizum", "Other"],
+      default: "Cash",
     },
 
     amountEUR: {
@@ -54,31 +54,29 @@ const contributionSchema = new mongoose.Schema(
 
     position: {
       type: String,
-      default: '',
+      default: "",
     },
 
     confirmedBy: {
       type: String,
-      default: '',
+      default: "",
     },
 
     remarks: {
       type: String,
-      default: '',
+      default: "",
     },
   },
   { timestamps: true }
 );
 
-/**
- * Auto-generate receiptNumber like REC-0001, REC-0002, ...
- */
-contributionSchema.pre('save', async function (next) {
+// Auto-generate receiptNumber like REC-0001, REC-0002, ...
+contributionSchema.pre("save", async function (next) {
   if (this.receiptNumber) return next();
 
   try {
     const last = await mongoose
-      .model('Contribution')
+      .model("Contribution")
       .findOne({ receiptNumber: { $regex: /^REC-\d+$/ } })
       .sort({ receiptNumber: -1 })
       .lean();
@@ -92,8 +90,8 @@ contributionSchema.pre('save', async function (next) {
       }
     }
 
-    const padded = String(nextNum).padStart(4, '0');
-    this.receiptNumber = 'REC-' + padded;
+    const padded = String(nextNum).padStart(4, "0");
+    this.receiptNumber = "REC-" + padded;
 
     next();
   } catch (err) {
@@ -101,4 +99,6 @@ contributionSchema.pre('save', async function (next) {
   }
 });
 
-module.exports = mongoose.model('Contribution', contributionSchema);
+// ⭐ ESM default export (REQUIRED for Render)
+const Contribution = mongoose.model("Contribution", contributionSchema);
+export default Contribution;
